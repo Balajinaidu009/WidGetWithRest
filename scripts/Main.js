@@ -122,3 +122,32 @@ function executeWidgetCode() {
                         myWidget.displayData(dataResp);
                     },
                     onFailure: function(err, responseData) {
+                        console.error("WAFData onFailure Error:", err);
+                        console.error("WAFData onFailure Response Data:", responseData);
+                        document.getElementById("content-display").style.display = "block";
+                        document.getElementById("content-display").innerHTML = "<p style='color:red;'>401 Error: Security Context Rejected. Check Console.</p>";
+                    }
+                });
+            },
+
+            callData: function() {
+                var platformId = widget.getValue('x3dPlatformId');
+                console.log("Retrieving 3DSpace URL for platformId:", platformId);
+
+                i3DXCompassServices.getServiceUrl({
+                    serviceName: '3DSpace',
+                    platformId: platformId,
+                    onComplete: function(url) { 
+                        myWidget.url3DSpace = url; 
+                        console.log("3DSpace Service URL successfully set to:", url);
+                    },
+                    onFailure: function(err) {
+                        console.error("Failed to get 3DSpace URL via Compass Services:", err);
+                    }
+                });
+            }
+        };
+
+        widget.addEvent("onLoad", myWidget.onLoadWidget);
+    });
+}
