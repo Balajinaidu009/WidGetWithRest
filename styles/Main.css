@@ -1,20 +1,64 @@
-/*
- * @author DSIS
- */
-
-p {
-    border-bottom: 1px solid grey;
-}
-table {
-    border: 1px solid grey;
+#widget-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background: #ffffff;
 }
 
-th {
+#drop-zone-ui {
+    border: 2px dashed #b4b4b4;
+    border-radius: 12px;
+    padding: 50px;
+    text-align: center;
+    background: #fcfcfc;
+    transition: all 0.3s ease;
+}
+
+.drag-over #drop-zone-ui {
+    border-color: #3d82e3;
+    background: #f0f6ff;
+}
+
+.data-card {
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 380px;
+    text-align: left;
+}
+
+.card-header {
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+}
+
+.prop-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-bottom: 1px solid #f9f9f9;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: #3d82e3;
+    color: white;
+    border: none;
+    cursor: pointer;
     font-weight: bold;
 }
 
-td,
-th {
-    border: 1px solid grey;
-    padding: 5px;
+.success-box {
+    margin: 10px;
+    padding: 10px;
+    background: #dff0d8;
+    border: 1px solid #d6e9c6;
+    color: #3c763d;
+    font-size: 11px;
 }

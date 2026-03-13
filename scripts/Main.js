@@ -1,120 +1,110 @@
 function executeWidgetCode() {
-    require(['DS/PlatformAPI/PlatformAPI', 'DS/DataDragAndDrop/DataDragAndDrop', 'DS/WAFData/WAFData', 'DS/i3DXCompassServices/i3DXCompassServices'], function($, PlatformAPI, DataDragAndDrop , WAFData, i3DXCompassServices) {
+    require(["UWA/Drivers/jQuery", "DS/PlatformAPI/PlatformAPI", "DS/DataDragAndDrop/DataDragAndDrop", "DS/WAFData/WAFData", "DS/i3DXCompassServices/i3DXCompassServices"], function($, PlatformAPI, DataDragAndDrop, WAFData, i3DXCompassServices) {
         var myWidget = {
-			console.log("inside the JS File");
             dataFull: [],
-			topicName: "clickUserId",
-			url3DSpace : "",
-            
+            url3DSpace: "",
+
             displayData: function(arrData) {
-                var objctInfo = arrData[0];
-                var rang = 0;
-                var $wdgBody = $(widget.body);
-                $wdgBody.empty();
+                var $contentDiv = $("#content-display");
+                var $dropZone = $("#drop-zone-ui");
+                
+                $dropZone.hide();
+                $contentDiv.show().empty();
 
-                var $table = $("<table></table>");
+                if (!arrData || arrData.length === 0) {
+                    $contentDiv.html("<div class='data-card'><p>No data found.</p><button onclick='location.reload()'>Back</button></div>");
+                    return;
+                }
 
-                $table.append("<thead><tr><th>Attribute Name</th><th>Attribute Value</th></tr></thead>");
+                var objInfo = arrData[0];
+                var cardHTML = `
+                    <div class="data-card">
+                        <div class="card-header">
+                            <h3><span class="fonticon fonticon-info"></span> Object Details</h3>
+                            <button class="btn-text" onclick="location.reload()">Reset</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="prop-row"><span>Name</span><strong>${objInfo.name || "N/A"}</strong></div>
+                            <div class="prop-row"><span>Type</span><strong>${objInfo.type || "N/A"}</strong></div>
+                            <div class="prop-row"><span>Revision</span><code class="id-badge">${objInfo.revision || "A"}</code></div>
+                        </div>
+                        <div class="card-footer">
+                            <button id="callApiBtn" class="btn-primary">Send to Vertex</button>
+                        </div>
+                        <div id="apiResult"></div>
+                    </div>`;
 
-                var $tBody = $("<tbody></tbody>");
-                if(arrData && arrData.length >0){
-                    var keysLst = Object.keys(objctInfo);
-                    for (var i = 0; i < keysLst.length; i++) {
-                        if(rang <= 15){
-                            if(objctInfo[keysLst[i]] && objctInfo[keysLst[i]].length >0){
-                                var $tr = $(`<tr><td>${keysLst[i]}</td><td>${objctInfo[keysLst[i]]}</td></tr>`);
-                                $tr.on("click", myWidget.clicOnRow);
-                                $tBody.append($tr);
-                                rang++;
-                            }
-                        }else{
-                            break;
-                        }
+                $contentDiv.append(cardHTML);
+
+                // Vertex Export Logic (Matching Phase 3 of your flow)
+                $("#callApiBtn").on("click", function() {
+                    if (confirm("Send " + objInfo.name + " to Vertex?")) {
+                        var vertexUrl = "https://www.plmtrainer.com:444/Vertex-0.0.1-SNAPSHOT/vertexvis/v1/exportdata?id=" + objInfo.id;
+                        
+                        // Using WAFData for the Vertex call if it requires auth, otherwise use fetch
+                        fetch(vertexUrl)
+                            .then(res => res.json())
+                            .then(data => {
+                                const formattedSummary = data["Summary Lines"].replace(/\n/g, "<br>");
+                                $("#apiResult").html("<div class='success-box'>" + formattedSummary + "</div>");
+                            })
+                            .catch(err => {
+                                $("#apiResult").html("<p class='error-text'>Error: " + err.message + "</p>");
+                            });
                     }
-                  }
-                $table.append($tBody);
-                $wdgBody.append($table);
-                myWidget.dropzone($wdgBody);
+                });
             },
 
             onLoadWidget: function() {
-				myWidget.callData();
-				PlatformAPI.subscribe(myWidget.topicName, myWidget.displayInfo);
-				myWidget.displayData(myWidget.dataFull);
+                myWidget.callData();
+                myWidget.initDropzone();
             },
 
-            dropzone: function(eltHTML){
-                DataDragAndDrop.droppable(eltHTML[0], {
-                    drop: function(data){
-                       console.log('Drop data ' + data);
-                       var dataDnD = JSON.parse(data);
-                       var physicalid = dataDnD.data.items[0].objId;
-					   widget.body.style="border:5px hidden;"
-					   myWidget.displayInfo({physicalid: physicalid});
+            initDropzone: function() {
+                var dropElement = document.getElementById("drop-zone-ui");
+                DataDragAndDrop.droppable(dropElement, {
+                    drop: function(data) {
+                        var dataDnD = JSON.parse(data);
+                        var physicalid = dataDnD.data.items[0].objId;
+                        $(widget.body).removeClass("drag-over");
+                        myWidget.fetchObjectInfo(physicalid);
                     },
-					enter: function(){
-						widget.body.style="border:5px solid orange;"
-					},
-					leave: function(){
-						widget.body.style="border:5px hidden;"
-					}
-                 });                 
+                    enter: function() { $(widget.body).addClass("drag-over"); },
+                    leave: function() { $(widget.body).removeClass("drag-over"); }
+                });
             },
 
-            callData: function() {
-				i3DXCompassServices.getServiceUrl({
-				    serviceName: '3DSpace', 
-				    platformId: widget.getValue('x3dPlatformId'),
-				    onComplete : function (URLResult){
-						myWidget.url3DSpace = URLResult;
-						console.log("Inside callData function. 3DSpace URL is : " + myWidget.url3DSpace);
-					},
-					onFailure : function (error){
-						console.log(error);
-					}
-				});				
-			},
-			
-			displayInfo: function(data) {
-                //Callback function called when the event happen, is published by any other widget of the dashboard, or our widget itself
-                var physicalid= data.physicalid;
-				
-				var urlWAF = myWidget.url3DSpace + "/DSISTools/ObjectInfo";
-				console.log(urlWAF);
+            fetchObjectInfo: function(physicalid) {
+                var urlWAF = myWidget.url3DSpace + "/DSISTools/ObjectInfo";
                 var dataWAF = {
-                   action: "getInfos",
-                   objectIds: physicalid,
-                   selects: "attribute[*],current,name,revision"
+                    action: "getInfos",
+                    objectIds: physicalid,
+                    selects: "attribute[*],current,name,revision,type"
                 };
-                var headerWAF = {
-                   SecurityContext: widget.getValue("ctx")
-                };
-                var methodWAF = "GET";
+                
                 WAFData.authenticatedRequest(urlWAF, {
-                   method: methodWAF,
-                   headers: headerWAF,
-                   data: dataWAF,
-                   type: "json",
-                   onComplete: function(dataResp) {
-                       if (dataResp.msg === "OK") {
-                           myWidget.dataFull = dataResp.data;
-                           myWidget.displayData(myWidget.dataFull);
-                           console.log(myWidget.dataFull);
-                       } else {
-                           widget.body.innerHTML += "<p>Error in WebService Response</p>";
-                           widget.body.innerHTML += "<p>" + JSON.stringify(dataResp) + "</p>";
-                       }
-                   },
-                   onFailure: function(error) {
-                       widget.body.innerHTML += "<p>Call Faillure</p>";
-                       widget.body.innerHTML += "<p>" + JSON.stringify(error) + "</p>";
-                   }
+                    method: "GET",
+                    headers: { SecurityContext: widget.getValue("ctx") },
+                    data: dataWAF,
+                    type: "json",
+                    onComplete: function(dataResp) {
+                        if (dataResp.msg === "OK") {
+                            myWidget.displayData(dataResp.data);
+                        } else {
+                            $("#content-display").show().html("<p>Error fetching data</p>");
+                        }
+                    }
                 });
-			}
+            },
+            callData: function() {
+                i3DXCompassServices.getServiceUrl({
+                    serviceName: '3DSpace',
+                    platformId: widget.getValue('x3dPlatformId'),
+                    onComplete: function(url) { myWidget.url3DSpace = url; }
+                });
+            }
         };
 
-        widget.myWidget = myWidget;
-
-        widget.addEvent('onLoad', myWidget.onLoadWidget);
+        widget.addEvent("onLoad", myWidget.onLoadWidget);
     });
 }
