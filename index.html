@@ -11,9 +11,6 @@
 	<meta name="debugMode" content="true" />
 	<meta name="strictMode" content="false" />
 
-	<script type="text/javascript" src="../DSISLibraries/jquery/jquery-3.2.1.min.js"></script>
-
-	<!-- Widget files -->
 	<link rel="stylesheet" type="text/css" href="styles/Main.css" />
 	<script type="text/javascript" src="scripts/Main.js"></script>
 
@@ -32,7 +29,20 @@
 </head>
 
 <body>
-	<p>Loading...</p>
+    <div id="widget-container">
+        
+        <div id="drop-zone-ui">
+            <div class="drop-icon-container">
+                <span class="fonticon fonticon-drag-drop"></span>
+            </div>
+            <h2>Vertex Data Export</h2>
+            <p>Drop Here to Send Data to Vertex</p>
+        </div>
+
+        <div id="content-display" style="display:none;">
+            </div>
+
+    </div>
 </body>
 
 </html>
