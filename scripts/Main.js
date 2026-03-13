@@ -1,7 +1,6 @@
 function executeWidgetCode() {
-    require(["UWA/Drivers/jQuery", "DS/PlatformAPI/PlatformAPI", "DS/DataDragAndDrop/DataDragAndDrop", "DS/WAFData/WAFData", "DS/i3DXCompassServices/i3DXCompassServices"], function(jQuery, PlatformAPI, DataDragAndDrop, WAFData, i3DXCompassServices) {
+    require(["DS/PlatformAPI/PlatformAPI", "DS/DataDragAndDrop/DataDragAndDrop", "DS/WAFData/WAFData", "DS/i3DXCompassServices/i3DXCompassServices"], function( PlatformAPI, DataDragAndDrop, WAFData, i3DXCompassServices) {
 		// Define $ locally so your existing code doesn't break
-        var $ = jQuery;
         var myWidget = {
             dataFull: [],
             url3DSpace: "",
