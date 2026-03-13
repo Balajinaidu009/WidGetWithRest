@@ -1,5 +1,5 @@
 function executeWidgetCode() {
-    require(["UWA/Drivers/jQuery", "DS/PlatformAPI/PlatformAPI", "DS/DataDragAndDrop/DataDragAndDrop", "DS/WAFData/WAFData", "DS/i3DXCompassServices/i3DXCompassServices"], function($, PlatformAPI, DataDragAndDrop , WAFData, i3DXCompassServices) {
+    require(['DS/PlatformAPI/PlatformAPI', 'DS/DataDragAndDrop/DataDragAndDrop', 'DS/WAFData/WAFData', 'DS/i3DXCompassServices/i3DXCompassServices'], function($, PlatformAPI, DataDragAndDrop , WAFData, i3DXCompassServices) {
         var myWidget = {
 			console.log("inside the JS File");
             dataFull: [],
@@ -115,6 +115,6 @@ function executeWidgetCode() {
 
         widget.myWidget = myWidget;
 
-        widget.addEvent("onLoad", myWidget.onLoadWidget);
+        widget.addEvent('onLoad', myWidget.onLoadWidget);
     });
 }
