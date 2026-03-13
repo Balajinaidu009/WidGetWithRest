@@ -1,6 +1,7 @@
 function executeWidgetCode() {
     require(["UWA/Drivers/jQuery", "DS/PlatformAPI/PlatformAPI", "DS/DataDragAndDrop/DataDragAndDrop", "DS/WAFData/WAFData", "DS/i3DXCompassServices/i3DXCompassServices"], function($, PlatformAPI, DataDragAndDrop , WAFData, i3DXCompassServices) {
         var myWidget = {
+			console.log("inside the JS File");
             dataFull: [],
 			topicName: "clickUserId",
 			url3DSpace : "",
