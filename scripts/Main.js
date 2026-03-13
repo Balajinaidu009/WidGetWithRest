@@ -1,33 +1,41 @@
 function executeWidgetCode() {
-    require(["DS/PlatformAPI/PlatformAPI", "DS/DataDragAndDrop/DataDragAndDrop", "DS/WAFData/WAFData", "DS/i3DXCompassServices/i3DXCompassServices"], function( PlatformAPI, DataDragAndDrop, WAFData, i3DXCompassServices) {
-		// Define $ locally so your existing code doesn't break
+    console.log("--- Widget Execution Started ---");
+
+    require(["DS/PlatformAPI/PlatformAPI", "DS/DataDragAndDrop/DataDragAndDrop", "DS/WAFData/WAFData", "DS/i3DXCompassServices/i3DXCompassServices"], 
+    function(PlatformAPI, DataDragAndDrop, WAFData, i3DXCompassServices) {
+        
         var myWidget = {
-            dataFull: [],
             url3DSpace: "",
 
             displayData: function(arrData) {
-                var $contentDiv = $("#content-display");
-                var $dropZone = $("#drop-zone-ui");
+                console.log("Entering displayData with raw data:", arrData);
+
+                var contentDiv = document.getElementById("content-display");
+                var dropZone = document.getElementById("drop-zone-ui");
                 
-                $dropZone.hide();
-                $contentDiv.show().empty();
+                dropZone.style.display = "none";
+                contentDiv.style.display = "block";
+                contentDiv.innerHTML = "";
 
-                if (!arrData || arrData.length === 0) {
-                    $contentDiv.html("<div class='data-card'><p>No data found.</p><button onclick='location.reload()'>Back</button></div>");
-                    return;
-                }
+                // API mapping logic
+                var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
+                console.log("Mapped Object Info for UI:", objInfo);
 
-                var objInfo = arrData[0];
+                var name = objInfo.name || objInfo.attributes?.['displayName'] || "Unknown";
+                var type = objInfo.type || "VPMReference";
+                var rev = objInfo.revision || "A";
+                var id = objInfo.id || objInfo.physicalid;
+
                 var cardHTML = `
                     <div class="data-card">
                         <div class="card-header">
-                            <h3><span class="fonticon fonticon-info"></span> Object Details</h3>
-                            <button class="btn-text" onclick="location.reload()">Reset</button>
+                            <h3>Object Details</h3>
+                            <button class="btn-text" id="resetBtn">Reset</button>
                         </div>
                         <div class="card-body">
-                            <div class="prop-row"><span>Name</span><strong>${objInfo.name || "N/A"}</strong></div>
-                            <div class="prop-row"><span>Type</span><strong>${objInfo.type || "N/A"}</strong></div>
-                            <div class="prop-row"><span>Revision</span><code class="id-badge">${objInfo.revision || "A"}</code></div>
+                            <div class="prop-row"><span>Name</span><strong>${name}</strong></div>
+                            <div class="prop-row"><span>Type</span><strong>${type}</strong></div>
+                            <div class="prop-row"><span>Revision</span><code class="id-badge">${rev}</code></div>
                         </div>
                         <div class="card-footer">
                             <button id="callApiBtn" class="btn-primary">Send to Vertex</button>
@@ -35,77 +43,82 @@ function executeWidgetCode() {
                         <div id="apiResult"></div>
                     </div>`;
 
-                $contentDiv.append(cardHTML);
+                contentDiv.innerHTML = cardHTML;
 
-                // Vertex Export Logic (Matching Phase 3 of your flow)
-                $("#callApiBtn").on("click", function() {
-                    if (confirm("Send " + objInfo.name + " to Vertex?")) {
-                        var vertexUrl = "https://www.plmtrainer.com:444/Vertex-0.0.1-SNAPSHOT/vertexvis/v1/exportdata?id=" + objInfo.id;
+                document.getElementById("resetBtn").onclick = function() { 
+                    console.log("Reset button clicked. Reloading widget.");
+                    location.reload(); 
+                };
+                
+                document.getElementById("callApiBtn").onclick = function() {
+                    console.log("Call Vertex API button clicked for ID:", id);
+                    if (confirm("Send " + name + " to Vertex?")) {
+                        var vertexUrl = "https://www.plmtrainer.com:444/Vertex-0.0.1-SNAPSHOT/vertexvis/v1/exportdata?id=" + id;
+                        console.log("Vertex Export URL:", vertexUrl);
                         
-                        // Using WAFData for the Vertex call if it requires auth, otherwise use fetch
                         fetch(vertexUrl)
-                            .then(res => res.json())
+                            .then(res => {
+                                console.log("Vertex Fetch raw response status:", res.status);
+                                return res.json();
+                            })
                             .then(data => {
+                                console.log("Vertex API response data:", data);
                                 const formattedSummary = data["Summary Lines"].replace(/\n/g, "<br>");
-                                $("#apiResult").html("<div class='success-box'>" + formattedSummary + "</div>");
+                                document.getElementById("apiResult").innerHTML = "<div class='success-box'>" + formattedSummary + "</div>";
                             })
                             .catch(err => {
-                                $("#apiResult").html("<p class='error-text'>Error: " + err.message + "</p>");
+                                console.error("Vertex API fetch error:", err);
+                                document.getElementById("apiResult").innerHTML = "<p style='color:red;'>Export Error: " + err.message + "</p>";
                             });
                     }
-                });
+                };
             },
 
             onLoadWidget: function() {
+                console.log("onLoadWidget triggered.");
                 myWidget.callData();
                 myWidget.initDropzone();
             },
 
             initDropzone: function() {
                 var dropElement = document.getElementById("drop-zone-ui");
+                console.log("Initializing drop zone on element:", dropElement);
+
                 DataDragAndDrop.droppable(dropElement, {
                     drop: function(data) {
+                        console.log("Item dropped. Raw Drop Data:", data);
                         var dataDnD = JSON.parse(data);
-                        var physicalid = dataDnD.data.items[0].objId;
-                        $(widget.body).removeClass("drag-over");
+                        var physicalid = dataDnD.data.items[0].objId || dataDnD.data.items[0].objectId;
+                        
+                        console.log("Extracted Physical ID:", physicalid);
                         myWidget.fetchObjectInfo(physicalid);
-                    },
-                    enter: function() { $(widget.body).addClass("drag-over"); },
-                    leave: function() { $(widget.body).removeClass("drag-over"); }
+                    }
                 });
             },
 
             fetchObjectInfo: function(physicalid) {
-                var urlWAF = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/search?$searchStr=VPMReference&$mask=dsmveng:EngItemMask.Details";
-                var dataWAF = {
-                    action: "getInfos",
-                    objectIds: physicalid,
-                    selects: "attribute[*],current,name,revision,type"
-                };
+                var securityContext = widget.getOption('currentSecurityContext');
+                console.log("Attempting fetch with SecurityContext:", securityContext);
                 
+                if (!securityContext) {
+                    console.error("Critical: securityContext is null/undefined. Check your dashboard credentials.");
+                    document.getElementById("content-display").style.display = "block";
+                    document.getElementById("content-display").innerHTML = "Error: No Security Context selected.";
+                    return;
+                }
+
+                var urlWAF = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + physicalid + "?$mask=dsmveng:EngItemMask.Details";
+                console.log("WAFData GET Request URL:", urlWAF);
+
                 WAFData.authenticatedRequest(urlWAF, {
                     method: "GET",
-                    headers: { SecurityContext: widget.getValue("ctx") },
-                    data: dataWAF,
+                    headers: { 
+                        "SecurityContext": securityContext,
+                        "Accept": "application/json"
+                    },
                     type: "json",
                     onComplete: function(dataResp) {
-                        if (dataResp.msg === "OK") {
-                            myWidget.displayData(dataResp.data);
-                        } else {
-                            $("#content-display").show().html("<p>Error fetching data</p>");
-                        }
-                    }
-                });
-            },
-            callData: function() {
-                i3DXCompassServices.getServiceUrl({
-                    serviceName: '3DSpace',
-                    platformId: widget.getValue('x3dPlatformId'),
-                    onComplete: function(url) { myWidget.url3DSpace = url; }
-                });
-            }
-        };
-
-        widget.addEvent("onLoad", myWidget.onLoadWidget);
-    });
-}
+                        console.log("WAFData onComplete. Response received:", dataResp);
+                        myWidget.displayData(dataResp);
+                    },
+                    onFailure: function(err, responseData) {
