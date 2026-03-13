@@ -76,7 +76,7 @@ function executeWidgetCode() {
             },
 
             fetchObjectInfo: function(physicalid) {
-                var urlWAF = myWidget.url3DSpace + "/DSISTools/ObjectInfo";
+                var urlWAF = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/search?$searchStr=VPMReference&$mask=dsmveng:EngItemMask.Details";
                 var dataWAF = {
                     action: "getInfos",
                     objectIds: physicalid,
