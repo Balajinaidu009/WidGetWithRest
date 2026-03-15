@@ -67,9 +67,9 @@ function executeWidgetCode() {
             executeExpand: function(id, context, csrfName, csrfValue) {
                 var expandUrl = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + id + "/expand";
                 var body = {
-                    "expandDepth": -1, // Changed to -1 for full structure depth
+                    "expandDepth": -1,
                     "withPath": true,
-                    "type_filter_bo": ["VPMReference", "VPMRepReference"], // Added Reps for 3D Shapes
+                    "type_filter_bo": ["VPMReference", "VPMRepReference"],
                     "type_filter_rel": ["VPMInstance", "VPMRepInstance"]
                 };
 
@@ -99,17 +99,25 @@ function executeWidgetCode() {
                 var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
                 var name = objInfo.title || objInfo.name || "Selected Object";
 
-                // CSS for increased width and height
                 contentDiv.innerHTML = `
                     <style>
                         .data-card { width: 98%; max-width: 1100px; margin: 10px auto; background: white; border: 1px solid #d1d4d4; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: 'Arial', sans-serif; }
                         .card-header { padding: 12px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+                        .toolbar { padding: 8px 20px; background: #f9f9f9; border-bottom: 1px solid #eee; display: flex; gap: 10px; }
                         .bom-container { max-height: 500px; overflow-y: auto; overflow-x: auto; width: 100%; }
-                        .bom-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-                        .bom-table th { background: #f1f1f1; padding: 10px; text-align: left; color: #666; font-weight: normal; position: sticky; top: 0; }
-                        .tree-row:hover { background: #f9f9f9; }
-                        .tree-row td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
-                        .btn-reset { border: 1px solid #ccc; background: white; cursor: pointer; padding: 4px 8px; border-radius: 3px; font-size: 11px; }
+                        .bom-table { width: 100%; border-collapse: collapse; font-size: 13px; color: #333; }
+                        .bom-table th { background: #f1f1f1; padding: 10px; text-align: left; color: #666; font-weight: normal; position: sticky; top: 0; border-bottom: 1px solid #ddd; z-index: 10; }
+                        .tree-row td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+                        .tree-row.hidden { display: none; }
+                        .tree-toggle { 
+                            cursor: pointer; width: 16px; height: 16px; display: inline-flex; align-items: center; 
+                            justify-content: center; border: 1px solid #ccc; font-size: 12px; margin-right: 6px; 
+                            background: #fff; color: #666; user-select: none; border-radius: 2px;
+                        }
+                        .type-icon-3dx { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; }
+                        .state-badge { padding: 2px 8px; color: white; border-radius: 4px; font-size: 10px; font-weight: bold; }
+                        .btn-reset, .btn-tool { border: 1px solid #ccc; background: white; cursor: pointer; padding: 4px 10px; border-radius: 3px; font-size: 11px; }
+                        .btn-tool:hover { background: #eee; }
                         .btn-primary { width: 100%; background: #42a5f5; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 0 0 4px 4px; }
                     </style>
                     <div class="data-card">
@@ -119,6 +127,10 @@ function executeWidgetCode() {
                                 <h3 style="margin:0; font-size: 16px;">${name}</h3>
                             </div>
                             <button id="widgetResetBtn" class="btn-reset">✕ Reset</button>
+                        </div>
+                        <div class="toolbar">
+                            <button class="btn-tool" onclick="executeWidgetCode.expandAll()">展开全部 (Expand All)</button>
+                            <button class="btn-tool" onclick="executeWidgetCode.collapseAll()">收起全部 (Collapse All)</button>
                         </div>
                         <div id="apiResult" class="bom-container">
                             <p style="padding: 20px; color: #999; text-align: center;">Expanding full structure...</p>
@@ -132,104 +144,137 @@ function executeWidgetCode() {
                 };
             },
 
-renderExpandTable: function(expandData) {
-    var contentDiv = document.getElementById("apiResult");
-    var members = expandData.member || [];
-    var map = {};
-    var rootId = null;
+            renderExpandTable: function(expandData) {
+                var contentDiv = document.getElementById("apiResult");
+                var members = expandData.member || [];
+                var map = {};
+                var rootId = null;
 
-    // 1. Map all References AND 3D Shapes
-    members.forEach(m => {
-        if (m.type === "VPMReference" || m.type === "3DShape") {
-            map[m.id] = { ...m, children: [] };
-            if (!rootId && m.type === "VPMReference") rootId = m.id;
-        }
-    });
+                members.forEach(m => {
+                    if (m.type === "VPMReference" || m.type === "3DShape") {
+                        map[m.id] = { ...m, children: [] };
+                        if (!rootId && m.type === "VPMReference") rootId = m.id;
+                    }
+                });
 
-    // 2. Parse the Path arrays
-    members.forEach(m => {
-        if (m.Path && m.Path.length >= 3) {
-            for (var i = 0; i < m.Path.length - 2; i += 2) {
-                var parentId = m.Path[i];
-                var childId = m.Path[i + 2];
-                if (map[parentId] && map[childId]) {
-                    var exists = map[parentId].children.some(c => c.id === childId);
-                    if (!exists) { map[parentId].children.push(map[childId]); }
+                members.forEach(m => {
+                    if (m.Path && m.Path.length >= 3) {
+                        for (var i = 0; i < m.Path.length - 2; i += 2) {
+                            var parentId = m.Path[i];
+                            var childId = m.Path[i + 2];
+                            if (map[parentId] && map[childId]) {
+                                var exists = map[parentId].children.some(c => c.id === childId);
+                                if (!exists) { map[parentId].children.push(map[childId]); }
+                            }
+                        }
+                    }
+                });
+
+                contentDiv.innerHTML = `
+                    <table class="bom-table" id="bomTreeTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 45%;">Title</th>
+                                <th>Rev</th>
+                                <th>Type</th>
+                                <th>Owner</th>
+                                <th>State</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${myWidget.generateTreeHTML(map[rootId], 0, null)}
+                        </tbody>
+                    </table>`;
+            },
+
+            generateTreeHTML: function(node, level, parentUniqueId) {
+                if (!node) return "";
+                var indent = level * 20;
+                var isShape = node.type === "3DShape";
+                var hasChildren = node.children && node.children.length > 0;
+                var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
+
+                var rowId = "row_" + node.id + "_" + Math.floor(Math.random() * 1000000);
+                var parentAttr = parentUniqueId ? `data-parent="${parentUniqueId}"` : "";
+
+                var iconUrl = "";
+                if (isShape) {
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part";
+                } else if (!hasSubAssembly) {
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart";
+                } else {
+                    iconUrl = myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
                 }
+
+                var html = `
+                    <tr class="tree-row" id="${rowId}" ${parentAttr}>
+                        <td style="padding-left: ${indent + 10}px;">
+                            <div style="display: flex; align-items: center;">
+                                ${hasChildren ? `<span class="tree-toggle" onclick="executeWidgetCode.toggleNode('${rowId}')">-</span>` : '<span style="width:24px"></span>'}
+                                <img src="${iconUrl}" class="type-icon-3dx">
+                                <span class="node-title">${node.title || node.name}</span>
+                            </div>
+                        </td>
+                        <td style="color: #42a5f5; font-weight: bold;">${node.revision || "A"}</td>
+                        <td style="color: #666;">${isShape ? "3D Shape" : "Physical Product"}</td>
+                        <td>${node.owner || ""}</td>
+                        <td>
+                            <span class="state-badge" style="background:${node.state === 'IN_WORK' ? '#008eb0' : (node.state === 'RELEASED' ? '#00a65a' : '#7a7a7a')};">
+                                ${node.state || ""}
+                            </span>
+                        </td>
+                    </tr>`;
+
+                if (node.children) {
+                    node.children.forEach(child => {
+                        html += myWidget.generateTreeHTML(child, level + 1, rowId);
+                    });
+                }
+                return html;
             }
-        }
-    });
-
-    // 3. Render Table
-    contentDiv.innerHTML = `
-        <table class="bom-table">
-            <thead>
-                <tr>
-                    <th style="width: 45%;">Title</th>
-                    <th>Rev</th>
-                    <th>Type</th>
-                    <th>Owner</th>
-                    <th>State</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${myWidget.generateTreeHTML(map[rootId], 0)}
-            </tbody>
-        </table>`;
-},
-
-generateTreeHTML: function(node, level) {
-    if (!node) return "";
-    var indent = level * 20;
-    var isShape = node.type === "3DShape";
-    
-    // Logic to determine if this is a "Part" vs "Assembly"
-    var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
-    var isPhysicalProduct = node.type === "VPMReference";
-
-    var iconUrl = "";
-
-    if (isShape) {
-        // Standard 3D Shape Icon
-        iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape";
-    } else if (isPhysicalProduct && !hasSubAssembly) {
-        // 3D Part Icon (Physical Product with no child assemblies)
-        iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart";
-    } else {
-        // Standard Assembly Icon
-        iconUrl = myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
-    }
-
-    var html = `
-        <tr class="tree-row">
-            <td style="padding-left: ${indent + 10}px;">
-                <div class="title-cell">
-                    <span class="tree-connector" style="color: #ccc; font-family: monospace;">${level > 0 ? "┕ " : ""}</span>
-                    <img src="${iconUrl}" class="type-icon-3dx" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">
-                    <span class="node-title" style="vertical-align:middle;">${node.title || node.name}</span>
-                </div>
-            </td>
-            <td><span class="rev-text">${node.revision || "A"}</span></td>
-            <td style="color:#888; font-size: 11px;">${isShape ? "3D Shape" : (hasSubAssembly ? "Assembly" : "3D Part")}</td>
-            <td>
-                <div style="display:flex; align-items:center;">
-                    <span class="owner-initials" style="background:#eee; padding:2px 4px; border-radius:3px; margin-right:5px; font-size:10px;">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
-                    <span style="font-size:11px;">${node.owner || ""}</span>
-                </div>
-            </td>
-            <td>
-                <span class="state-badge work" style="padding: 2px 6px; color: white; border-radius: 10px; font-size: 10px; background:${node.state === 'IN_WORK' ? '#008eb0' : '#7a7a7a'};">
-                    ${node.state || ""}
-                </span>
-            </td>
-        </tr>`;
-
-    if (node.children) {
-        node.children.forEach(child => { html += myWidget.generateTreeHTML(child, level + 1); });
-    }
-    return html;
-}
         };
+
+        // --- GLOBAL UTILITIES FOR TOGGLING ---
+        
+        executeWidgetCode.toggleNode = function(rowId) {
+            var row = document.getElementById(rowId);
+            var toggleBtn = row.querySelector('.tree-toggle');
+            var isCollapsing = toggleBtn.innerText === "-";
+            toggleBtn.innerText = isCollapsing ? "+" : "-";
+            setChildVisibility(rowId, !isCollapsing);
+        };
+
+        executeWidgetCode.expandAll = function() {
+            var allRows = document.querySelectorAll('.tree-row');
+            allRows.forEach(r => {
+                r.classList.remove('hidden');
+                var btn = r.querySelector('.tree-toggle');
+                if (btn) btn.innerText = "-";
+            });
+        };
+
+        executeWidgetCode.collapseAll = function() {
+            var allRows = document.querySelectorAll('.tree-row[data-parent]');
+            allRows.forEach(r => r.classList.add('hidden'));
+            var allToggles = document.querySelectorAll('.tree-toggle');
+            allToggles.forEach(t => t.innerText = "+");
+        };
+
+        function setChildVisibility(pid, visible) {
+            var allRows = document.querySelectorAll(`[data-parent="${pid}"]`);
+            allRows.forEach(r => {
+                if (visible) {
+                    r.classList.remove('hidden');
+                    var childToggle = r.querySelector('.tree-toggle');
+                    if (!childToggle || childToggle.innerText === "-") {
+                        setChildVisibility(r.id, true);
+                    }
+                } else {
+                    r.classList.add('hidden');
+                    setChildVisibility(r.id, false);
+                }
+            });
+        }
 
         widget.addEvent("onLoad", myWidget.onLoadWidget);
     });
