@@ -132,43 +132,58 @@ function executeWidgetCode() {
                 };
             },
 
-            renderExpandTable: function(expandData) {
-                var contentDiv = document.getElementById("apiResult");
-                var members = expandData.member || [];
-                var map = {};
-                var rootId = null;
+renderExpandTable: function(expandData) {
+    var contentDiv = document.getElementById("apiResult");
+    var members = expandData.member || [];
+    var map = {};
+    var rootId = null;
 
-                members.forEach(m => {
-                    if (m.type === "VPMReference" || m.type === "VPMRepReference") {
-                        map[m.id] = { ...m, children: [] };
-                        if (!rootId && m.type === "VPMReference") rootId = m.id;
+    // 1. First Pass: Map all References and Reps
+    members.forEach(m => {
+        if (m.type === "VPMReference" || m.type === "VPMRepReference") {
+            map[m.id] = { ...m, children: [] };
+            // Auto-detect root if not set
+            if (!rootId && m.type === "VPMReference") rootId = m.id;
+        }
+    });
+
+    // 2. Second Pass: Parse the Path arrays for nesting
+    members.forEach(m => {
+        if (m.Path && m.Path.length >= 3) {
+            // A Path looks like [ParentRef, Instance, ChildRef, Instance, GrandChildRef...]
+            // We need to iterate through and link every 2 steps (Ref to Ref)
+            for (var i = 0; i < m.Path.length - 2; i += 2) {
+                var parentId = m.Path[i];
+                var childId = m.Path[i + 2];
+
+                if (map[parentId] && map[childId]) {
+                    // Avoid duplicate children
+                    var exists = map[parentId].children.some(c => c.id === childId);
+                    if (!exists) {
+                        map[parentId].children.push(map[childId]);
                     }
-                });
+                }
+            }
+        }
+    });
 
-                members.forEach(m => {
-                    if (m.Path && m.Path.length === 3) {
-                        var pId = m.Path[0];
-                        var cId = m.Path[2];
-                        if (map[pId] && map[cId]) map[pId].children.push(map[cId]);
-                    }
-                });
-
-                contentDiv.innerHTML = `
-                    <table class="bom-table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Rev</th>
-                                <th>Type</th>
-                                <th>Owner</th>
-                                <th>State</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${myWidget.generateTreeHTML(map[rootId], 0)}
-                        </tbody>
-                    </table>`;
-            },
+    // 3. Render the UI
+    contentDiv.innerHTML = `
+        <table class="bom-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Rev</th>
+                    <th>Type</th>
+                    <th>Owner</th>
+                    <th>State</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${myWidget.generateTreeHTML(map[rootId], 0)}
+            </tbody>
+        </table>`;
+},
 
             generateTreeHTML: function(node, level) {
                 if (!node) return "";

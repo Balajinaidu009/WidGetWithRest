@@ -223,7 +223,7 @@
     background-color: #f2f7fd !important;
 }/* The main container card */
 .data-card {
-    width: 95%;            /* Increased from default */
+    width: 98%;            /* Increased from default */
     max-width: 1200px;     /* Allows it to grow on large screens */
     margin: 20px auto;
     min-height: 500px;     /* Increased height */
