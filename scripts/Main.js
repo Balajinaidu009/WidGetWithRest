@@ -183,30 +183,42 @@ generateTreeHTML: function(node, level) {
     var indent = level * 20;
     var isShape = node.type === "3DShape";
     
-    // Icon Logic using your specific links
-    var iconUrl = isShape 
-        ? myWidget.url3DSpace+"/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
-        : myWidget.url3DSpace+"/snresources/images/icons/small/I_VPMNavProduct.png";
+    // Logic to determine if this is a "Part" vs "Assembly"
+    var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
+    var isPhysicalProduct = node.type === "VPMReference";
+
+    var iconUrl = "";
+
+    if (isShape) {
+        // Standard 3D Shape Icon
+        iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape";
+    } else if (isPhysicalProduct && !hasSubAssembly) {
+        // 3D Part Icon (Physical Product with no child assemblies)
+        iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart";
+    } else {
+        // Standard Assembly Icon
+        iconUrl = myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
+    }
 
     var html = `
         <tr class="tree-row">
             <td style="padding-left: ${indent + 10}px;">
                 <div class="title-cell">
-                    <span class="tree-connector">${level > 0 ? "┕" : ""}</span>
-                    <img src="${iconUrl}" class="type-icon-3dx">
-                    <span class="node-title">${node.title || node.name}</span>
+                    <span class="tree-connector" style="color: #ccc; font-family: monospace;">${level > 0 ? "┕ " : ""}</span>
+                    <img src="${iconUrl}" class="type-icon-3dx" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">
+                    <span class="node-title" style="vertical-align:middle;">${node.title || node.name}</span>
                 </div>
             </td>
             <td><span class="rev-text">${node.revision || "A"}</span></td>
-            <td style="color:#888; font-size: 11px;">${isShape ? "3D Shape" : "Physical Product"}</td>
+            <td style="color:#888; font-size: 11px;">${isShape ? "3D Shape" : (hasSubAssembly ? "Assembly" : "3D Part")}</td>
             <td>
                 <div style="display:flex; align-items:center;">
-                    <span class="owner-initials">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
+                    <span class="owner-initials" style="background:#eee; padding:2px 4px; border-radius:3px; margin-right:5px; font-size:10px;">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
                     <span style="font-size:11px;">${node.owner || ""}</span>
                 </div>
             </td>
             <td>
-                <span class="state-badge work" style="background:${node.state === 'IN_WORK' ? '#008eb0' : '#7a7a7a'};">
+                <span class="state-badge work" style="padding: 2px 6px; color: white; border-radius: 10px; font-size: 10px; background:${node.state === 'IN_WORK' ? '#008eb0' : '#7a7a7a'};">
                     ${node.state || ""}
                 </span>
             </td>
