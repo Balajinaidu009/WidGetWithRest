@@ -102,6 +102,7 @@ function executeWidgetCode() {
                     onComplete: function(expandData) {
                         console.log("Expand Success:", expandData);
                         // You can now render the children in the UI
+						myWidget.renderExpandTable(expandData);
                     },
                     onFailure: function(err) {
                         console.error("Expand Failed:", err);
@@ -135,6 +136,51 @@ function executeWidgetCode() {
                     myWidget.exportToVertex(id, name);
                 };
             },
+			renderExpandTable: function(expandData) {
+    var contentDiv = document.getElementById("apiResult");
+    var members = expandData.member || [];
+
+    // Filter to get only the References (Physical Products)
+    var products = members.filter(m => m.type === "VPMReference");
+
+    var tableHTML = `
+        <div class="bom-container">
+            <table class="bom-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th>Title</th>
+                        <th>Revision</th>
+                        <th>Type</th>
+                        <th>Owner</th>
+                        <th>State</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+    products.forEach((prod, index) => {
+        // Simple indentation logic: if it's not the first item, indent it to look like a child
+        var indentClass = index === 0 ? "" : "indent-level-" + index;
+        var stateLabel = prod.state === "IN_WORK" ? "In Work" : prod.state;
+
+        tableHTML += `
+            <tr class="${indentClass}">
+                <td><input type="checkbox"></td>
+                <td class="title-cell">
+                    <span class="tree-icon">${index === products.length - 1 ? "└─" : "├─"}</span>
+                    <img src="https://kim.3dexperience.3ds.com/enovia/common/images/iconSmallPhysicalProduct.png" class="type-icon">
+                    ${prod.title}
+                </td>
+                <td><span class="rev-link">${prod.revision}</span></td>
+                <td>Physical Product</td>
+                <td><span class="owner-badge">${prod.owner.substring(0,2).toUpperCase()}</span> ${prod.owner}</td>
+                <td><span class="state-badge work">${stateLabel}</span></td>
+            </tr>`;
+    });
+
+    tableHTML += `</tbody></table></div>`;
+    contentDiv.innerHTML = tableHTML;
+},
 
             exportToVertex: function(id, name) {
                 // Your Vertex Fetch logic
