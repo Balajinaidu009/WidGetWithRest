@@ -61,7 +61,7 @@ function executeWidgetCode() {
             // --- STEP 2: Get CSRF Token (GET) ---
             getCsrfAndExpand: function(physicalid, securityContext) {
                 // This is the specific endpoint for Modeler tokens
-                var csrfUrl = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/get_csrf_token";
+                var csrfUrl = myWidget.url3DSpace + "/resources/v1/application/CSRF";
 
                 WAFData.authenticatedRequest(csrfUrl, {
                     method: "GET",
