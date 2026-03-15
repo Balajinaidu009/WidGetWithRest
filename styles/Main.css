@@ -256,4 +256,55 @@
 .card-header, .card-footer {
     padding: 15px 20px;
     background: #fcfcfc;
+}/* Container that holds everything */
+#content-display {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* The Card: Changed to use percentage width and flex-grow */
+.data-card {
+    width: 98%; 
+    max-width: none;        /* Remove max-width to allow full screen */
+    height: calc(100vh - 40px); /* Height based on the browser/widget window */
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* The scrolling area: Makes the BOM take up all remaining space */
+.bom-container {
+    flex: 1;                /* Occupy all available middle space */
+    overflow: auto;         /* Scrollbars only if content overflows */
+    border-top: 1px solid #efefef;
+    border-bottom: 1px solid #efefef;
+    background: #fff;
+}
+
+.bom-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;       /* Keeps columns legible */
+}
+
+/* Sticky Header so you don't lose titles while scrolling */
+.bom-table th {
+    position: sticky;
+    top: 0;
+    background: #f6f6f6;
+    z-index: 2;
+    padding: 12px 10px;
+    border-bottom: 2px solid #ddd;
+}
+
+/* Alignment for the Title tree */
+.title-cell {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
 }

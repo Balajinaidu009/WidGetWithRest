@@ -138,26 +138,25 @@ renderExpandTable: function(expandData) {
     var map = {};
     var rootId = null;
 
-    // 1. First Pass: Map all References and Reps
+    // 1. First Pass: Map all References AND 3D Shapes
     members.forEach(m => {
-        if (m.type === "VPMReference" || m.type === "VPMRepReference") {
+        // Checking for both standard Products and 3D Shapes
+        if (m.type === "VPMReference" || m.type === "3DShape") {
             map[m.id] = { ...m, children: [] };
-            // Auto-detect root if not set
+            // Set first Product found as root
             if (!rootId && m.type === "VPMReference") rootId = m.id;
         }
     });
 
-    // 2. Second Pass: Parse the Path arrays for nesting
+    // 2. Second Pass: Parse the Path arrays (including Reps/Shapes)
     members.forEach(m => {
         if (m.Path && m.Path.length >= 3) {
-            // A Path looks like [ParentRef, Instance, ChildRef, Instance, GrandChildRef...]
-            // We need to iterate through and link every 2 steps (Ref to Ref)
+            // Path: [ParentID, InstanceID, ChildID...]
             for (var i = 0; i < m.Path.length - 2; i += 2) {
                 var parentId = m.Path[i];
                 var childId = m.Path[i + 2];
 
                 if (map[parentId] && map[childId]) {
-                    // Avoid duplicate children
                     var exists = map[parentId].children.some(c => c.id === childId);
                     if (!exists) {
                         map[parentId].children.push(map[childId]);
@@ -167,12 +166,12 @@ renderExpandTable: function(expandData) {
         }
     });
 
-    // 3. Render the UI
+    // 3. Render the UI with Fluid Design
     contentDiv.innerHTML = `
         <table class="bom-table">
             <thead>
                 <tr>
-                    <th>Title</th>
+                    <th style="width: 40%;">Title</th>
                     <th>Rev</th>
                     <th>Type</th>
                     <th>Owner</th>
@@ -185,48 +184,49 @@ renderExpandTable: function(expandData) {
         </table>`;
 },
 
-            generateTreeHTML: function(node, level) {
-                if (!node) return "";
-                var indent = level * 20;
-                
-                // Switch icon based on Type
-                var iconName = (node.type === "VPMRepReference") ? "I_VPMNav3DShape" : "I_VPMNavProduct";
-                var typeLabel = (node.type === "VPMRepReference") ? "3D Shape" : "Physical Product";
-                var iconUrl = `${myWidget.url3DSpace}/cvservlet/files?fileType=ICON&ipml_46_iconname=${iconName}`;
-                
-                var html = `
-                    <tr class="tree-row">
-                        <td style="padding-left: ${indent}px;">
-                            <div style="display:flex; align-items:center;">
-                                <span style="color:#ccc; margin-right:5px; font-family: monospace;">${level > 0 ? "┕" : ""}</span>
-                                <img src="${iconUrl}" style="width:18px; height:18px; margin-right:6px;">
-                                <span>${node.title || node.name}</span>
-                            </div>
-                        </td>
-                        <td><span style="color:#368ec4; font-weight:bold;">${node.revision || ""}</span></td>
-                        <td style="color:#888; font-size: 11px;">${typeLabel}</td>
-                        <td>
-                            <div style="display:flex; align-items:center;">
-                                <span style="background:#a38b7a; color:#fff; width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:9px; margin-right:5px;">
-                                    ${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}
-                                </span>
-                                <span style="font-size:11px;">${node.owner || ""}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span style="background:${node.state === 'IN_WORK' ? '#008eb0' : '#888'}; color:#fff; padding:2px 6px; border-radius:2px; font-size:10px; font-weight:bold;">
-                                ${node.state || ""}
-                            </span>
-                        </td>
-                    </tr>`;
+generateTreeHTML: function(node, level) {
+    if (!node) return "";
+    var indent = level * 20;
+    
+    // Logic for Icons and Labels (Handling 3DShape vs Product)
+    var is3D = node.type === "3DShape";
+    var iconName = is3D ? "I_VPMNav3DShape" : "I_VPMNavProduct";
+    var typeLabel = is3D ? "3D Shape" : "Physical Product";
+    var iconUrl = `${myWidget.url3DSpace}/cvservlet/files?fileType=ICON&ipml_46_iconname=${iconName}`;
+    
+    var html = `
+        <tr class="tree-row">
+            <td style="padding-left: ${indent + 10}px;">
+                <div class="title-cell">
+                    <span class="tree-connector">${level > 0 ? "┕" : ""}</span>
+                    <img src="${iconUrl}" class="type-icon-3dx">
+                    <span class="node-title">${node.title || node.name}</span>
+                </div>
+            </td>
+            <td><span class="rev-text">${node.revision || "A"}</span></td>
+            <td style="color:#888; font-size: 11px;">${typeLabel}</td>
+            <td>
+                <div style="display:flex; align-items:center;">
+                    <span class="owner-initials">
+                        ${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}
+                    </span>
+                    <span style="font-size:11px;">${node.owner || ""}</span>
+                </div>
+            </td>
+            <td>
+                <span class="state-badge work" style="background:${node.state === 'RELEASED' ? '#42a848' : '#008eb0'}">
+                    ${node.state || ""}
+                </span>
+            </td>
+        </tr>`;
 
-                if (node.children) {
-                    node.children.forEach(child => {
-                        html += myWidget.generateTreeHTML(child, level + 1);
-                    });
-                }
-                return html;
-            }
+    if (node.children && node.children.length > 0) {
+        node.children.forEach(child => {
+            html += myWidget.generateTreeHTML(child, level + 1);
+        });
+    }
+    return html;
+}
         };
 
         widget.addEvent("onLoad", myWidget.onLoadWidget);
