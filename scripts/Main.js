@@ -200,17 +200,25 @@ function executeWidgetCode() {
                 var isShape = node.type === "3DShape";
                 var hasChildren = node.children && node.children.length > 0;
                 
-                // LEVEL LOGIC: If level > 1, hide the row by default
+                // Logic for 3DPart Icon
+                var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
+                var isPhysicalProduct = node.type === "VPMReference";
+
+                // --- 1 LEVEL DEEP LOGIC ---
                 var isHidden = level > 1 ? "hidden" : "";
-                // If level >= 1, the toggle icon should be "+" because its children are hidden
                 var toggleChar = level >= 1 ? "+" : "-";
 
                 var rowId = "row_" + node.id + "_" + Math.floor(Math.random() * 1000000);
                 var parentAttr = parentUniqueId ? `data-parent="${parentUniqueId}"` : "";
 
-                var iconUrl = (isShape) ? 
-                    myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape" : 
-                    myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
+                var iconUrl = "";
+                if (isShape) {
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape";
+                } else if (isPhysicalProduct && !hasSubAssembly) {
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart";
+                } else {
+                    iconUrl = myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
+                }
 
                 var html = `
                     <tr class="tree-row ${isHidden}" id="${rowId}" ${parentAttr}>
@@ -222,7 +230,7 @@ function executeWidgetCode() {
                             </div>
                         </td>
                         <td style="color: #42a5f5; font-weight: bold;">${node.revision || "A"}</td>
-                        <td style="color: #666;">${isShape ? "3D Shape" : "Physical Product"}</td>
+                        <td style="color: #666;">${isShape ? "3D Shape" : (hasSubAssembly ? "Assembly" : "3D Part")}</td>
                         <td>${node.owner || ""}</td>
                         <td>
                             <span class="state-badge" style="background:${node.state === 'IN_WORK' ? '#008eb0' : (node.state === 'RELEASED' ? '#00a65a' : '#7a7a7a')};">
@@ -255,18 +263,15 @@ function executeWidgetCode() {
         };
 
         executeWidgetCode.collapseAll = function() {
-            // Hide everything except level 0 (Root) and level 1 (Direct children)
             document.querySelectorAll('.tree-row[data-parent]').forEach(r => {
                 var parentRow = document.getElementById(r.getAttribute('data-parent'));
-                // If the parent itself has a parent, then this row is level 2 or deeper
                 if (parentRow && parentRow.hasAttribute('data-parent')) {
                     r.classList.add('hidden');
                 } else {
-                    r.classList.remove('hidden'); // Keep level 1 visible
+                    r.classList.remove('hidden');
                 }
             });
             document.querySelectorAll('.tree-toggle').forEach(t => t.innerText = "+");
-            // Special case: root toggle remains "-" if we want level 1 always visible
             var rootToggle = document.querySelector('.tree-row:not([data-parent]) .tree-toggle');
             if (rootToggle) rootToggle.innerText = "-";
         };
@@ -275,7 +280,6 @@ function executeWidgetCode() {
             document.querySelectorAll(`[data-parent="${pid}"]`).forEach(r => {
                 if (visible) {
                     r.classList.remove('hidden');
-                    // Only continue expanding if the child's own toggle is set to "-"
                     var childToggle = r.querySelector('.tree-toggle');
                     if (childToggle && childToggle.innerText === "-") setChildVisibility(r.id, true);
                 } else {
