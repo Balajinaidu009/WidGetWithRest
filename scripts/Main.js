@@ -44,6 +44,9 @@ function executeWidgetCode() {
                     drop: function(data) {
                         console.log("Dropzone: Item dropped. Parsing JSON...");
                         var dataDnD = JSON.parse(data);
+						console.log("dataDnD:", dataDnD);
+						console.log("dataDnD.data:", dataDnD.data);
+						console.log("dataDnD.data.items:", dataDnD.data.items);
                         
                         // Extract ID and Context from the dropped item metadata
                         var physicalid = dataDnD.data.items[0].objectId;
@@ -87,6 +90,9 @@ function executeWidgetCode() {
                         console.log("WAFData: Response Body:", responseData);
                     }
                 });
+				// var urlWAFPost = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + physicalid + "/expand";
+                //console.log("urlWAFPost: POST Request to ->", urlWAFPost);
+				
             },
 
             // --- 4. UI RENDERING ---
