@@ -138,40 +138,34 @@ renderExpandTable: function(expandData) {
     var map = {};
     var rootId = null;
 
-    // 1. First Pass: Map all References AND 3D Shapes
+    // 1. Map all References AND 3D Shapes
     members.forEach(m => {
-        // Checking for both standard Products and 3D Shapes
         if (m.type === "VPMReference" || m.type === "3DShape") {
             map[m.id] = { ...m, children: [] };
-            // Set first Product found as root
             if (!rootId && m.type === "VPMReference") rootId = m.id;
         }
     });
 
-    // 2. Second Pass: Parse the Path arrays (including Reps/Shapes)
+    // 2. Parse the Path arrays
     members.forEach(m => {
         if (m.Path && m.Path.length >= 3) {
-            // Path: [ParentID, InstanceID, ChildID...]
             for (var i = 0; i < m.Path.length - 2; i += 2) {
                 var parentId = m.Path[i];
                 var childId = m.Path[i + 2];
-
                 if (map[parentId] && map[childId]) {
                     var exists = map[parentId].children.some(c => c.id === childId);
-                    if (!exists) {
-                        map[parentId].children.push(map[childId]);
-                    }
+                    if (!exists) { map[parentId].children.push(map[childId]); }
                 }
             }
         }
     });
 
-    // 3. Render the UI with Fluid Design
+    // 3. Render Table
     contentDiv.innerHTML = `
         <table class="bom-table">
             <thead>
                 <tr>
-                    <th style="width: 40%;">Title</th>
+                    <th style="width: 45%;">Title</th>
                     <th>Rev</th>
                     <th>Type</th>
                     <th>Owner</th>
@@ -187,13 +181,13 @@ renderExpandTable: function(expandData) {
 generateTreeHTML: function(node, level) {
     if (!node) return "";
     var indent = level * 20;
+    var isShape = node.type === "3DShape";
     
-    // Logic for Icons and Labels (Handling 3DShape vs Product)
-    var is3D = node.type === "3DShape";
-    var iconName = is3D ? "I_VPMNav3DShape" : "I_VPMNavProduct";
-    var typeLabel = is3D ? "3D Shape" : "Physical Product";
-    var iconUrl = `${myWidget.url3DSpace}/cvservlet/files?fileType=ICON&ipml_46_iconname=${iconName}`;
-    
+    // Icon Logic using your specific links
+    var iconUrl = isShape 
+        ? myWidget.url3DSpace+"/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
+        : myWidget.url3DSpace+"/snresources/images/icons/small/I_VPMNavProduct.png";
+
     var html = `
         <tr class="tree-row">
             <td style="padding-left: ${indent + 10}px;">
@@ -204,26 +198,22 @@ generateTreeHTML: function(node, level) {
                 </div>
             </td>
             <td><span class="rev-text">${node.revision || "A"}</span></td>
-            <td style="color:#888; font-size: 11px;">${typeLabel}</td>
+            <td style="color:#888; font-size: 11px;">${isShape ? "3D Shape" : "Physical Product"}</td>
             <td>
                 <div style="display:flex; align-items:center;">
-                    <span class="owner-initials">
-                        ${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}
-                    </span>
+                    <span class="owner-initials">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
                     <span style="font-size:11px;">${node.owner || ""}</span>
                 </div>
             </td>
             <td>
-                <span class="state-badge work" style="background:${node.state === 'RELEASED' ? '#42a848' : '#008eb0'}">
+                <span class="state-badge work" style="background:${node.state === 'IN_WORK' ? '#008eb0' : '#7a7a7a'};">
                     ${node.state || ""}
                 </span>
             </td>
         </tr>`;
 
-    if (node.children && node.children.length > 0) {
-        node.children.forEach(child => {
-            html += myWidget.generateTreeHTML(child, level + 1);
-        });
+    if (node.children) {
+        node.children.forEach(child => { html += myWidget.generateTreeHTML(child, level + 1); });
     }
     return html;
 }
