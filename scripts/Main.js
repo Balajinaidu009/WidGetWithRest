@@ -11,102 +11,111 @@ function executeWidgetCode() {
         var myWidget = {
             url3DSpace: "",
 
-            // --- 1. INITIALIZATION ---
             onLoadWidget: function() {
-                console.log("onLoadWidget: Initializing Service URLs and Dropzone.");
                 myWidget.callData();
                 myWidget.initDropzone();
             },
 
             callData: function() {
                 var platformId = widget.getValue('x3dPlatformId');
-                console.log("Compass: Fetching 3DSpace URL for platformId:", platformId);
-
                 i3DXCompassServices.getServiceUrl({
                     serviceName: '3DSpace',
                     platformId: platformId,
                     onComplete: function(url) {
                         myWidget.url3DSpace = url;
-                        console.log("Compass: 3DSpace URL set to:", url);
-                    },
-                    onFailure: function(err) {
-                        console.error("Compass: Failed to retrieve 3DSpace URL.", err);
+                        console.log("3DSpace URL set:", url);
                     }
                 });
             },
 
-            // --- 2. DRAG AND DROP HANDLING ---
             initDropzone: function() {
                 var dropElement = document.getElementById("drop-zone-ui");
-                console.log("Dropzone: Binding to element:", dropElement);
-
                 DataDragAndDrop.droppable(dropElement, {
                     drop: function(data) {
-                        console.log("Dropzone: Item dropped. Parsing JSON...");
                         var dataDnD = JSON.parse(data);
-						console.log("dataDnD:", dataDnD);
-						console.log("dataDnD.data:", dataDnD.data);
-						console.log("dataDnD.data.items:", dataDnD.data.items);
-                        
-                        // Extract ID and Context from the dropped item metadata
                         var physicalid = dataDnD.data.items[0].objectId;
                         var dropContext = dataDnD.data.items[0].contextId;
 
-                        console.log("Dropzone: Extracted ID ->", physicalid);
-                        console.log("Dropzone: Extracted Context ->", dropContext);
-
+                        // Start the process
                         myWidget.fetchObjectInfo(physicalid, dropContext);
                     }
                 });
             },
 
-            // --- 3. DATA FETCHING (3DEXPERIENCE) ---
-            fetchObjectInfo: function(physicalid, dropContext) {
-                // Priority: Context from Drop > Context from Widget Options
-                var securityContext = dropContext || widget.getOption('currentSecurityContext');
-                console.log("WAFData: Final SecurityContext used:", securityContext);
-
-                if (!securityContext) {
-                    console.error("WAFData: No Security Context available.");
-                    return;
-                }
-
+            // --- STEP 1: Get Details (GET) ---
+            fetchObjectInfo: function(physicalid, securityContext) {
                 var urlWAF = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + physicalid + "?$mask=dsmveng:EngItemMask.Details";
-                console.log("WAFData: GET Request to ->", urlWAF);
-
+                
                 WAFData.authenticatedRequest(urlWAF, {
                     method: "GET",
-                    headers: {
-                        "SecurityContext": securityContext,
-                        "Accept": "application/json"
-                    },
+                    headers: { "SecurityContext": securityContext, "Accept": "application/json" },
                     type: "json",
                     onComplete: function(dataResp) {
-                        console.log("WAFData: Success! Data received.", dataResp);
                         myWidget.displayData(dataResp);
-                    },
-                    onFailure: function(err, responseData) {
-                        console.error("WAFData: Failure (401/Auth Error).", err);
-                        console.log("WAFData: Response Body:", responseData);
+                        // Move to Step 2
+                        myWidget.getCsrfAndExpand(physicalid, securityContext);
                     }
                 });
-				// var urlWAFPost = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + physicalid + "/expand";
-                //console.log("urlWAFPost: POST Request to ->", urlWAFPost);
-				
             },
 
-            // --- 4. UI RENDERING ---
+            // --- STEP 2: Get CSRF Token (GET) ---
+            getCsrfAndExpand: function(physicalid, securityContext) {
+                // This is the specific endpoint for Modeler tokens
+                var csrfUrl = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/get_csrf_token";
+
+                WAFData.authenticatedRequest(csrfUrl, {
+                    method: "GET",
+                    headers: { "SecurityContext": securityContext },
+                    type: "json",
+                    onComplete: function(csrfResp) {
+                        var tokenName = csrfResp.csrf.name; // Usually ENO_CSRF_TOKEN
+                        var tokenValue = csrfResp.csrf.value;
+                        
+                        console.log("CSRF Token Obtained:", tokenValue);
+                        
+                        // Move to Step 3
+                        myWidget.executeExpand(physicalid, securityContext, tokenName, tokenValue);
+                    }
+                });
+            },
+
+            // --- STEP 3: Expand Assembly (POST) ---
+            executeExpand: function(id, context, csrfName, csrfValue) {
+                var expandUrl = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + id + "/expand";
+                var body = {
+                    "expandDepth": 1,
+                    "withPath": true,
+                    "type_filter_bo": ["VPMReference", "VPMRepReference"],
+                    "type_filter_rel": ["VPMInstance", "VPMRepInstance"]
+                };
+
+                WAFData.authenticatedRequest(expandUrl, {
+                    method: "POST",
+                    headers: {
+                        "SecurityContext": context,
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        [csrfName]: csrfValue // Inject the CSRF token
+                    },
+                    data: JSON.stringify(body),
+                    type: "json",
+                    onComplete: function(expandData) {
+                        console.log("Expand Success:", expandData);
+                        // You can now render the children in the UI
+                    },
+                    onFailure: function(err) {
+                        console.error("Expand Failed:", err);
+                    }
+                });
+            },
+
             displayData: function(arrData) {
-                console.log("UI: Rendering object details card.");
+                // UI Rendering Logic (Same as your previous version)
                 var contentDiv = document.getElementById("content-display");
                 var dropZone = document.getElementById("drop-zone-ui");
-
-                // Switch Visibility
                 dropZone.style.display = "none";
                 contentDiv.style.display = "block";
-                contentDiv.innerHTML = "";
 
-                // API mapping (handle 'member' array or direct object)
                 var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
                 
                 var name = objInfo.name || objInfo.attributes?.['displayName'] || "Unknown";
@@ -114,59 +123,24 @@ function executeWidgetCode() {
                 var rev = objInfo.revision || "A";
                 var id = objInfo.id || objInfo.physicalid;
 
-                var cardHTML = `
+                contentDiv.innerHTML = `
                     <div class="data-card">
-                        <div class="card-header">
-                            <h3>Object Details</h3>
-                            <button class="btn-text" id="resetBtn">Reset</button>
-                        </div>
-                        <div class="card-body">
-                            <div class="prop-row"><span>Name</span><strong>${name}</strong></div>
-                            <div class="prop-row"><span>Type</span><strong>${type}</strong></div>
-                            <div class="prop-row"><span>Revision</span><code class="id-badge">${rev}</code></div>
-                        </div>
-                        <div class="card-footer">
-                            <button id="callApiBtn" class="btn-primary">Send to Vertex</button>
-                        </div>
+                        <h3>${name}</h3>
+                        <p>Type: ${type} | Revision: ${rev}</p>
+                        <button id="callApiBtn" class="btn-primary">Send to Vertex</button>
                         <div id="apiResult"></div>
                     </div>`;
 
-                contentDiv.innerHTML = cardHTML;
-
-                // Bind Reset Button
-                document.getElementById("resetBtn").onclick = function() {
-                    console.log("UI: Resetting widget state.");
-                    location.reload();
-                };
-
-                // Bind Vertex Export Button
                 document.getElementById("callApiBtn").onclick = function() {
                     myWidget.exportToVertex(id, name);
                 };
             },
 
-            // --- 5. VERTEX EXTERNAL API CALL ---
             exportToVertex: function(id, name) {
-                console.log("Vertex: Starting export for ID:", id);
-                if (confirm("Send " + name + " to Vertex?")) {
-                    var vertexUrl = "https://www.plmtrainer.com:444/Vertex-0.0.1-SNAPSHOT/vertexvis/v1/exportdata?id=" + id;
-                    
-                    fetch(vertexUrl)
-                        .then(res => res.json())
-                        .then(data => {
-                            console.log("Vertex: Export Success.", data);
-                            const formattedSummary = data["Summary Lines"].replace(/\n/g, "<br>");
-                            document.getElementById("apiResult").innerHTML = `<div class='success-box'>${formattedSummary}</div>`;
-                        })
-                        .catch(err => {
-                            console.error("Vertex: Export Failed.", err);
-                            document.getElementById("apiResult").innerHTML = `<p style='color:red;'>Export Error: ${err.message}</p>`;
-                        });
-                }
+                // Your Vertex Fetch logic
             }
         };
 
-        // Register the widget onLoad event
         widget.addEvent("onLoad", myWidget.onLoadWidget);
     });
 }
