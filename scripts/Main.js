@@ -138,8 +138,8 @@ function executeWidgetCode() {
                             <button id="widgetResetBtn" class="btn-reset">✕ Reset</button>
                         </div>
                         <div class="toolbar">
-                            <button class="btn-tool" onclick="executeWidgetCode.expandAll()">+ Expand All</button>
-                            <button class="btn-tool" onclick="executeWidgetCode.collapseAll()">− Collapse All</button>
+                            <button class="btn-tool" onclick="executeWidgetCode.expandAll()">Expand All</button>
+                            <button class="btn-tool" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
                         </div>
                         <div id="apiResult" class="bom-container"></div>
                         <button id="callApiBtn" class="btn-primary">Export to Vertex</button>
