@@ -138,19 +138,15 @@ renderExpandTable: function(expandData) {
     var map = {};
     var rootId = null;
 
-    // 1. Map all References and 3D Shapes
+    // 1. Map all References AND 3D Shapes
     members.forEach(m => {
         if (m.type === "VPMReference" || m.type === "3DShape") {
-            // Added 'expanded' property: root is true, others false by default
-            map[m.id] = { ...m, children: [], expanded: false };
-            if (!rootId && m.type === "VPMReference") {
-                rootId = m.id;
-                map[m.id].expanded = true; 
-            }
+            map[m.id] = { ...m, children: [] };
+            if (!rootId && m.type === "VPMReference") rootId = m.id;
         }
     });
 
-    // 2. Build the Tree Relationship
+    // 2. Parse the Path arrays
     members.forEach(m => {
         if (m.Path && m.Path.length >= 3) {
             for (var i = 0; i < m.Path.length - 2; i += 2) {
@@ -164,15 +160,7 @@ renderExpandTable: function(expandData) {
         }
     });
 
-    // Save the map to the widget object so we can access it during clicks
-    myWidget.currentTreeMap = map;
-    myWidget.rootId = rootId;
-
-    myWidget.refreshTreeUI();
-},
-
-refreshTreeUI: function() {
-    var contentDiv = document.getElementById("apiResult");
+    // 3. Render Table
     contentDiv.innerHTML = `
         <table class="bom-table">
             <thead>
@@ -185,7 +173,7 @@ refreshTreeUI: function() {
                 </tr>
             </thead>
             <tbody>
-                ${myWidget.generateTreeHTML(myWidget.currentTreeMap[myWidget.rootId], 0)}
+                ${myWidget.generateTreeHTML(map[rootId], 0)}
             </tbody>
         </table>`;
 },
@@ -193,27 +181,18 @@ refreshTreeUI: function() {
 generateTreeHTML: function(node, level) {
     if (!node) return "";
     var indent = level * 20;
-    var hasChildren = node.children && node.children.length > 0;
     var isShape = node.type === "3DShape";
     
-    // Toggle Icon Logic
-    var toggleBtn = "";
-    if (hasChildren) {
-        var icon = node.expanded ? "[-] " : "[+] ";
-        toggleBtn = `<span class="tree-toggle" onclick="myWidget.toggleNode('${node.id}')">${icon}</span>`;
-    } else {
-        toggleBtn = `<span class="tree-leaf-spacer">┕ </span>`;
-    }
-
+    // Icon Logic using your specific links
     var iconUrl = isShape 
-        ? myWidget.url3DSpace +"/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
-        : myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
+        ? myWidget.url3DSpace+"/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
+        : myWidget.url3DSpace+"/snresources/images/icons/small/I_VPMNavProduct.png";
 
     var html = `
         <tr class="tree-row">
             <td style="padding-left: ${indent + 10}px;">
                 <div class="title-cell">
-                    ${toggleBtn}
+                    <span class="tree-connector">${level > 0 ? "┕" : ""}</span>
                     <img src="${iconUrl}" class="type-icon-3dx">
                     <span class="node-title">${node.title || node.name}</span>
                 </div>
@@ -233,20 +212,10 @@ generateTreeHTML: function(node, level) {
             </td>
         </tr>`;
 
-    // Recursively add children ONLY if the parent is expanded
-    if (node.expanded && hasChildren) {
-        node.children.forEach(child => {
-            html += myWidget.generateTreeHTML(child, level + 1);
-        });
+    if (node.children) {
+        node.children.forEach(child => { html += myWidget.generateTreeHTML(child, level + 1); });
     }
     return html;
-},
-
-toggleNode: function(id) {
-    if (myWidget.currentTreeMap[id]) {
-        myWidget.currentTreeMap[id].expanded = !myWidget.currentTreeMap[id].expanded;
-        myWidget.refreshTreeUI();
-    }
 }
         };
 
