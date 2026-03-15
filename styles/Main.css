@@ -69,12 +69,9 @@
     overflow-x: auto;
 }
 
+/* Ensure the table doesn't jump around when expanding */
 .bom-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Arial', sans-serif;
-    font-size: 13px;
-    color: #3d3d3d;
+    table-layout: fixed;
 }
 
 .bom-table th {
@@ -90,8 +87,7 @@
 .bom-table tr:hover { background: #eef4fa; }
 
 .bom-table td {
-    padding: 6px 8px;
-    border-bottom: 1px solid #efefef;
+	white-space: nowrap;
 }
 
 /* Indentation for Tree Look */
@@ -299,4 +295,30 @@
     display: flex;
     align-items: center;
     white-space: nowrap;
+}
+.tree-toggle:hover {
+    background-color: #eef4fa;
+    border-radius: 3px;
+    color: #1a5bb5;
+}
+
+.tree-leaf-spacer {
+    font-family: 'Courier New', monospace;
+    color: #ccc;
+    margin-right: 8px;
+    display: inline-block;
+    width: 25px;
+    text-align: center;
+}
+.tree-toggle {
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #3d82e3;
+    margin-right: 8px;
+    display: inline-block;
+    width: 25px;
+    text-align: center;
+    user-select: none;
+    transition: background 0.2s;
 }

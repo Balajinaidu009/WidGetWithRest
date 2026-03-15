@@ -138,15 +138,19 @@ renderExpandTable: function(expandData) {
     var map = {};
     var rootId = null;
 
-    // 1. Map all References AND 3D Shapes
+    // 1. Map all References and 3D Shapes with an initial 'expanded' state
     members.forEach(m => {
         if (m.type === "VPMReference" || m.type === "3DShape") {
-            map[m.id] = { ...m, children: [] };
-            if (!rootId && m.type === "VPMReference") rootId = m.id;
+            // Root is expanded by default, children are collapsed
+            map[m.id] = { ...m, children: [], expanded: false };
+            if (!rootId && m.type === "VPMReference") {
+                rootId = m.id;
+                map[m.id].expanded = true; 
+            }
         }
     });
 
-    // 2. Parse the Path arrays
+    // 2. Build the Tree Relationship
     members.forEach(m => {
         if (m.Path && m.Path.length >= 3) {
             for (var i = 0; i < m.Path.length - 2; i += 2) {
@@ -160,8 +164,16 @@ renderExpandTable: function(expandData) {
         }
     });
 
-    // 3. Render Table
-    contentDiv.innerHTML = `
+    // Store map globally in myWidget to persist state across clicks
+    myWidget.currentTreeMap = map;
+    myWidget.rootId = rootId;
+
+    myWidget.refreshTreeUI();
+},
+
+refreshTreeUI: function() {
+    var container = document.getElementById("apiResult");
+    container.innerHTML = `
         <table class="bom-table">
             <thead>
                 <tr>
@@ -173,7 +185,7 @@ renderExpandTable: function(expandData) {
                 </tr>
             </thead>
             <tbody>
-                ${myWidget.generateTreeHTML(map[rootId], 0)}
+                ${myWidget.generateTreeHTML(myWidget.currentTreeMap[myWidget.rootId], 0)}
             </tbody>
         </table>`;
 },
@@ -181,18 +193,27 @@ renderExpandTable: function(expandData) {
 generateTreeHTML: function(node, level) {
     if (!node) return "";
     var indent = level * 20;
+    var hasChildren = node.children && node.children.length > 0;
     var isShape = node.type === "3DShape";
     
-    // Icon Logic using your specific links
+    // Toggle Logic: If has children, show [+]/[-]. If not, show leaf connector.
+    var toggleHtml = "";
+    if (hasChildren) {
+        var toggleIcon = node.expanded ? "[-] " : "[+] ";
+        toggleHtml = `<span class="tree-toggle" onclick="myWidget.toggleNode('${node.id}')">${toggleIcon}</span>`;
+    } else {
+        toggleHtml = `<span class="tree-leaf-spacer">┕ </span>`;
+    }
+
     var iconUrl = isShape 
-        ? myWidget.url3DSpace+"/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
-        : myWidget.url3DSpace+"/snresources/images/icons/small/I_VPMNavProduct.png";
+        ? myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
+        : myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
 
     var html = `
         <tr class="tree-row">
             <td style="padding-left: ${indent + 10}px;">
                 <div class="title-cell">
-                    <span class="tree-connector">${level > 0 ? "┕" : ""}</span>
+                    ${toggleHtml}
                     <img src="${iconUrl}" class="type-icon-3dx">
                     <span class="node-title">${node.title || node.name}</span>
                 </div>
@@ -212,10 +233,20 @@ generateTreeHTML: function(node, level) {
             </td>
         </tr>`;
 
-    if (node.children) {
-        node.children.forEach(child => { html += myWidget.generateTreeHTML(child, level + 1); });
+    // Recursively render children ONLY if parent is expanded
+    if (node.expanded && hasChildren) {
+        node.children.forEach(child => {
+            html += myWidget.generateTreeHTML(child, level + 1);
+        });
     }
     return html;
+},
+
+toggleNode: function(id) {
+    if (myWidget.currentTreeMap[id]) {
+        myWidget.currentTreeMap[id].expanded = !myWidget.currentTreeMap[id].expanded;
+        myWidget.refreshTreeUI();
+    }
 }
         };
 
