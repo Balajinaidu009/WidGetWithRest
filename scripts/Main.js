@@ -207,6 +207,7 @@ contentDiv.innerHTML = `
                                 <th>Type</th>
                                 <th>Owner</th>
                                 <th>State</th>
+                                <th>Title (Instance)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -223,6 +224,7 @@ contentDiv.innerHTML = `
 
             generateTreeHTML: function(node, level, parentUniqueId) {
                 if (!node) return "";
+                console.log("Current Node:", node);
                 var indent = level * 20;
                 var isShape = node.type === "3DShape";
                 var hasChildren = node.children && node.children.length > 0;
@@ -275,6 +277,7 @@ contentDiv.innerHTML = `
                                 ${node.state || ""}
                             </span>
                         </td>
+                        <td>${node.instance_title || "Nothing"}</td>
                     </tr>`;
 
                 if (node.children) {
