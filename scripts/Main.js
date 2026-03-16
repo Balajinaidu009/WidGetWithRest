@@ -391,15 +391,21 @@ function executeWidgetCode() {
         };
 
         executeWidgetCode.collapseAll = function () {
+            console.log("--- Collapsing All to Level 0 ---");
+            
+            // 1. Hide every row that is a child (has a parent attribute)
+            // Note: Since Level 0 rows in our new render don't have a data-parent,
+            // they will remain visible.
             document.querySelectorAll('.tree-row[data-parent]').forEach(r => {
-                var parentRow = document.getElementById(r.getAttribute('data-parent'));
-                if (parentRow && parentRow.hasAttribute('data-parent')) {
-                    r.classList.add('hidden');
-                }
+                r.classList.add('hidden');
             });
-            document.querySelectorAll('.tree-toggle').forEach(t => t.innerText = "+");
-            var rootToggle = document.querySelector('.tree-row:not([data-parent]) .tree-toggle');
-            if (rootToggle) rootToggle.innerText = "-";
+
+            // 2. Reset all toggles to "+"
+            document.querySelectorAll('.tree-toggle').forEach(t => {
+                t.innerText = "+";
+            });
+            
+            console.log("Collapse complete: Only top-level children are visible.");
         };
 
         function setChildVisibility(pid, visible) {
