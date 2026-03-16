@@ -1,4 +1,15 @@
-/* Container that holds the entire widget content */
+/* =========================
+   LAYOUT CONTAINERS
+========================= */
+
+#widget-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background: #ffffff;
+}
+
 #content-display {
     width: 100%;
     height: 100%;
@@ -6,7 +17,28 @@
     justify-content: center;
 }
 
-/* The Card: Full widget width/height with flex layout */
+/* =========================
+   DROP ZONE
+========================= */
+
+#drop-zone-ui {
+    border: 2px dashed #b4b4b4;
+    border-radius: 12px;
+    padding: 50px;
+    text-align: center;
+    background: #fcfcfc;
+    transition: all 0.3s ease;
+}
+
+.drag-over #drop-zone-ui {
+    border-color: #3d82e3;
+    background: #f0f6ff;
+}
+
+/* =========================
+   MAIN CARD
+========================= */
+
 .data-card {
     width: 100%;
     height: 100%;
@@ -16,10 +48,13 @@
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
 }
 
-/* Header styling */
+/* =========================
+   HEADER / TOOLBAR
+========================= */
+
 .card-header {
     padding: 12px 20px;
     background: #f8f9fa;
@@ -29,7 +64,6 @@
     align-items: center;
 }
 
-/* Toolbar for Expand/Collapse controls */
 .toolbar {
     padding: 8px 20px;
     background: #fcfcfc;
@@ -39,7 +73,10 @@
     gap: 10px;
 }
 
-/* BOM Table Container - Handles scrolling */
+/* =========================
+   BOM TABLE CONTAINER
+========================= */
+
 .bom-container {
     flex-grow: 1;
     overflow-y: auto;
@@ -50,12 +87,15 @@
     border-bottom: 1px solid #efefef;
 }
 
-/* BOM Table styling */
+/* =========================
+   TABLE
+========================= */
+
 .bom-table {
     width: 100%;
     min-width: 850px;
     border-collapse: collapse;
-    table-layout: fixed; /* Ensures steady column widths */
+    table-layout: fixed;
 }
 
 .bom-table th {
@@ -71,9 +111,6 @@
     z-index: 10;
 }
 
-.bom-table tr:nth-child(even) { background: #f9f9f9; }
-.bom-table tr:hover { background-color: #f2f7fd !important; }
-
 .bom-table td {
     padding: 8px;
     white-space: nowrap;
@@ -83,29 +120,39 @@
     font-size: 13px;
 }
 
-/* Title Cell & Tree Logic */
+.bom-table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.bom-table tr:hover {
+    background-color: #f2f7fd !important;
+}
+
+/* =========================
+   TREE STRUCTURE
+========================= */
+
 .title-cell {
     display: flex;
     align-items: center;
     white-space: nowrap;
 }
 
-.tree-toggle { 
+.tree-toggle {
     cursor: pointer;
-    width: 16px; 
-    height: 16px; 
-    display: inline-flex; 
-    align-items: center; 
-    justify-content: center; 
-    border: 1px solid #ccc; 
-    font-size: 12px; 
-    margin-right: 8px; 
-    background: #fff; 
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    font-size: 12px;
+    margin-right: 8px;
+    background: #fff;
     color: #666;
-    user-select: none;
     border-radius: 2px;
     font-family: monospace;
-    line-height: 1;
+    user-select: none;
 }
 
 .tree-toggle:hover {
@@ -116,21 +163,46 @@
 
 .tree-leaf-spacer {
     display: inline-block;
-    width: 25px; /* Matches width of toggle + margin */
+    width: 25px;
 }
 
-.type-icon-3dx { 
-    width: 18px; 
-    height: 18px; 
-    vertical-align: middle; 
-    margin-right: 8px; 
+.tree-row.hidden {
+    display: none;
 }
 
-.tree-row.hidden { 
-    display: none; 
+.tree-connector {
+    color: #b4b4b4;
+    margin-right: 5px;
+    font-size: 16px;
+    font-family: monospace;
 }
 
-/* Badges & Text Styling */
+/* =========================
+   INDENTATION
+========================= */
+
+.indent-level-1 { padding-left: 20px !important; }
+.indent-level-2 { padding-left: 40px !important; }
+
+/* =========================
+   ICONS
+========================= */
+
+.type-icon-3dx {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* =========================
+   TEXT STYLES
+========================= */
+
+.node-title {
+    color: #3d3d3d;
+}
+
 .rev-text {
     color: #368ec4;
     font-weight: bold;
@@ -141,6 +213,14 @@
 .rev-text:hover {
     text-decoration: underline;
 }
+
+.text-center {
+    text-align: center;
+}
+
+/* =========================
+   OWNER BADGE
+========================= */
 
 .owner-initials {
     background: #a38b7a;
@@ -156,6 +236,10 @@
     flex-shrink: 0;
 }
 
+/* =========================
+   STATE BADGE
+========================= */
+
 .state-badge.work {
     background: #008eb0;
     color: white;
@@ -165,23 +249,9 @@
     border-radius: 12px;
 }
 
-/* Buttons */
-.btn-reset {
-    background: #fff;
-    border: 1px solid #d1d4d4;
-    color: #555;
-    padding: 5px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.2s ease;
-}
-
-.btn-reset:hover {
-    background: #f1f1f1;
-    border-color: #b4b4b4;
-    color: #333;
-}
+/* =========================
+   BUTTONS
+========================= */
 
 .btn-primary {
     width: 100%;
@@ -199,7 +269,27 @@
     background: #2a6bc4;
 }
 
-/* Loading state placeholder */
+.btn-reset {
+    background: #fff;
+    border: 1px solid #d1d4d4;
+    color: #555;
+    padding: 5px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-reset:hover {
+    background: #f1f1f1;
+    border-color: #b4b4b4;
+    color: #333;
+}
+
+/* =========================
+   STATES
+========================= */
+
 .loading-state {
     padding: 50px;
     text-align: center;
@@ -208,7 +298,19 @@
     font-size: 14px;
 }
 
-/* Checkbox specific */
+.success-box {
+    margin: 10px;
+    padding: 10px;
+    background: #dff0d8;
+    border: 1px solid #d6e9c6;
+    color: #3c763d;
+    font-size: 11px;
+}
+
+/* =========================
+   CHECKBOX
+========================= */
+
 .node-checkbox {
     cursor: pointer;
     width: 15px;
