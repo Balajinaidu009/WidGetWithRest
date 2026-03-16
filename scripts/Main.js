@@ -214,7 +214,7 @@ function executeWidgetCode() {
 
                 // 3. Render Table - Iterate ONLY through children
                 var tableRowsHtml = "";
-                if (rootNode && rootNode.children && rootNode.children.length > 0) {
+                if (rootNode && rootNode.children ) {
                     rootNode.children.forEach(child => {
                         // Level starts at 0 for the first level of children
                         tableRowsHtml += myWidget.generateTreeHTML(child, 0, null);
@@ -253,8 +253,8 @@ function executeWidgetCode() {
                 var indent = level * 20;
                 var isShape = node.type === "3DShape";
                 var hasChildren = node.children && node.children.length > 0;
-                var isHidden = level > 1 ? "hidden" : "";
-                var toggleChar = level >= 1 ? "+" : "-";
+                var isHidden = level > 0 ? "hidden" : "";
+                var toggleChar = hasChildren ? "+" : "";
                 var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
                 var isPhysicalProduct = node.type === "VPMReference";
                 var rowId = "row_" + node.id + "_" + Math.floor(Math.random() * 1000000);
