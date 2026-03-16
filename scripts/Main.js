@@ -6,31 +6,31 @@ function executeWidgetCode() {
         "DS/DataDragAndDrop/DataDragAndDrop",
         "DS/WAFData/WAFData",
         "DS/i3DXCompassServices/i3DXCompassServices"
-    ], function(PlatformAPI, DataDragAndDrop, WAFData, i3DXCompassServices) {
+    ], function (PlatformAPI, DataDragAndDrop, WAFData, i3DXCompassServices) {
 
         var myWidget = {
             url3DSpace: "",
 
-            onLoadWidget: function() {
+            onLoadWidget: function () {
                 myWidget.callData();
                 myWidget.initDropzone();
             },
 
-            callData: function() {
+            callData: function () {
                 var platformId = widget.getValue('x3dPlatformId');
                 i3DXCompassServices.getServiceUrl({
                     serviceName: '3DSpace',
                     platformId: platformId,
-                    onComplete: function(url) {
+                    onComplete: function (url) {
                         myWidget.url3DSpace = url;
                     }
                 });
             },
 
-            initDropzone: function() {
+            initDropzone: function () {
                 var dropElement = document.getElementById("drop-zone-ui");
                 DataDragAndDrop.droppable(dropElement, {
-                    drop: function(data) {
+                    drop: function (data) {
                         var dataDnD = JSON.parse(data);
                         var physicalid = dataDnD.data.items[0].objectId;
                         var dropContext = dataDnD.data.items[0].contextId;
@@ -39,32 +39,32 @@ function executeWidgetCode() {
                 });
             },
 
-            fetchObjectInfo: function(physicalid, securityContext) {
+            fetchObjectInfo: function (physicalid, securityContext) {
                 var urlWAF = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + physicalid + "?$mask=dsmveng:EngItemMask.Details";
                 WAFData.authenticatedRequest(urlWAF, {
                     method: "GET",
                     headers: { "SecurityContext": securityContext, "Accept": "application/json" },
                     type: "json",
-                    onComplete: function(dataResp) {
+                    onComplete: function (dataResp) {
                         myWidget.displayData(dataResp);
                         myWidget.getCsrfAndExpand(physicalid, securityContext);
                     }
                 });
             },
 
-            getCsrfAndExpand: function(physicalid, securityContext) {
+            getCsrfAndExpand: function (physicalid, securityContext) {
                 var csrfUrl = myWidget.url3DSpace + "/resources/v1/application/CSRF";
                 WAFData.authenticatedRequest(csrfUrl, {
                     method: "GET",
                     headers: { "SecurityContext": securityContext },
                     type: "json",
-                    onComplete: function(csrfResp) {
+                    onComplete: function (csrfResp) {
                         myWidget.executeExpand(physicalid, securityContext, csrfResp.csrf.name, csrfResp.csrf.value);
                     }
                 });
             },
 
-            executeExpand: function(id, context, csrfName, csrfValue) {
+            executeExpand: function (id, context, csrfName, csrfValue) {
                 var resultContainer = document.getElementById("apiResult");
                 resultContainer.innerHTML = '<div class="loading-state">Expanding full structure...</div>';
 
@@ -86,31 +86,31 @@ function executeWidgetCode() {
                     },
                     data: JSON.stringify(body),
                     type: "json",
-                    onComplete: function(expandData) {
+                    onComplete: function (expandData) {
                         myWidget.renderExpandTable(expandData);
                     }
                 });
             },
 
-displayData: function(arrData) {
-    var contentDiv = document.getElementById("content-display");
-    var dropZone = document.getElementById("drop-zone-ui");
-    
-    dropZone.style.display = "none";
-    contentDiv.style.display = "block";
+            displayData: function (arrData) {
+                var contentDiv = document.getElementById("content-display");
+                var dropZone = document.getElementById("drop-zone-ui");
 
-    var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
-    
-    // Extracting properties from the API response
-    var name = objInfo.title || objInfo.name || "---";
-    var revision = objInfo.revision || "";
-    var ein = objInfo.enterprise_item_number || "None";
-    var state = objInfo.state || "IN_WORK";
-    var owner = objInfo.owner || "Unknown";
-    var modDate = objInfo.modified || "---"; // Or objInfo.modification_date depending on mask
-    var type = objInfo.type || "Physical Product";
+                dropZone.style.display = "none";
+                contentDiv.style.display = "block";
 
-contentDiv.innerHTML = `
+                var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
+
+                // Extracting properties from the API response
+                var name = objInfo.title || objInfo.name || "---";
+                var revision = objInfo.revision || "";
+                var ein = objInfo.enterprise_item_number || "None";
+                var state = objInfo.state || "IN_WORK";
+                var owner = objInfo.owner || "Unknown";
+                var modDate = objInfo.modified || "---"; // Or objInfo.modification_date depending on mask
+                var type = objInfo.type || "Physical Product";
+
+                contentDiv.innerHTML = `
     <div class="data-card">
         <div class="header-container">
             <div class="header-main">
@@ -133,7 +133,6 @@ contentDiv.innerHTML = `
                             <div class="prop-item">
                                 <span class="prop-label">Maturity State :</span>
                                 <span class="state-badge work">${state}</span>
-                                <span class="prop-action">Freeze ▾</span>
                             </div>
                             <div class="prop-item">
                                 <span class="prop-label">Type :</span>
@@ -142,7 +141,7 @@ contentDiv.innerHTML = `
                             <div class="prop-item">
                                 <span class="prop-label">Owner :</span>
                                 <div class="owner-chip">
-                                    <span class="owner-initials-small">${owner.substring(0,1).toUpperCase()}</span>
+                                    <span class="owner-initials-small">${owner.substring(0, 1).toUpperCase()}</span>
                                     <span class="prop-value highlight">${owner}</span>
                                 </div>
                             </div>
@@ -155,23 +154,26 @@ contentDiv.innerHTML = `
             </div>
         </div>
 
-        <div class="toolbar">
-            <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
-            <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
-            <span class="selection-hint">(Select items to export)</span>
-        </div>
+                <div class="toolbar">
+                    <div class="toolbar-left-group">
+                        <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
+                        <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
+                        <span class="selection-hint">(Select items to export)</span>
+                    </div>
+                            
+                    <button id="callApiBtn" class="btn-primary">Export to Vertex</button>
+                </div>
         
         <div id="apiResult" class="bom-container"></div>
-        <button id="callApiBtn" class="btn-primary">Export Selected to Vertex</button>
     </div>`;
 
-    document.getElementById("widgetResetBtn").onclick = function() {
-        contentDiv.style.display = "none";
-        dropZone.style.display = "flex";
-    };
-},
+                document.getElementById("widgetResetBtn").onclick = function () {
+                    contentDiv.style.display = "none";
+                    dropZone.style.display = "flex";
+                };
+            },
 
-            renderExpandTable: function(expandData) {
+            renderExpandTable: function (expandData) {
                 var contentDiv = document.getElementById("apiResult");
                 var members = expandData.member || [];
                 var map = {};
@@ -217,19 +219,19 @@ contentDiv.innerHTML = `
                     </table>`;
 
                 // Handle select all checkbox
-                document.getElementById("selectAllNodes").onclick = function() {
+                document.getElementById("selectAllNodes").onclick = function () {
                     var checkboxes = document.querySelectorAll(".node-checkbox");
                     checkboxes.forEach(cb => cb.checked = this.checked);
                 };
             },
 
-            generateTreeHTML: function(node, level, parentUniqueId) {
+            generateTreeHTML: function (node, level, parentUniqueId) {
                 if (!node) return "";
                 console.log("Current Node:", node);
                 var indent = level * 20;
                 var isShape = node.type === "3DShape";
                 var hasChildren = node.children && node.children.length > 0;
-                
+
                 var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
                 var isPhysicalProduct = node.type === "VPMReference";
 
@@ -240,9 +242,9 @@ contentDiv.innerHTML = `
                 var parentAttr = parentUniqueId ? `data-parent="${parentUniqueId}"` : "";
                 // Logic for Is Latest Revision
                 var isLatest = node.is_latest_revision === "TRUE" || node.is_latest_revision === true;
-                var latestIcon = isLatest 
-                    ? `<span class="status-icon icon-latest-true">✔</span>` 
-            : `<span class="status-icon icon-latest-false">✖</span>`;
+                var latestIcon = isLatest
+                    ? `<span class="status-icon icon-latest-true">✔</span>`
+                    : `<span class="status-icon icon-latest-false">✖</span>`;
 
                 var iconUrl = "";
                 if (isShape) {
@@ -270,7 +272,7 @@ contentDiv.innerHTML = `
                         <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
                         <td>
                             <div style="display:flex; align-items:center;">
-                                <span class="owner-initials">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
+                                <span class="owner-initials">${node.owner ? node.owner.substring(0, 2).toUpperCase() : "??"}</span>
                                 <span>${node.owner || ""}</span>
                             </div>
                         </td>
@@ -290,7 +292,7 @@ contentDiv.innerHTML = `
                 return html;
             },
 
-            handleExport: function() {
+            handleExport: function () {
                 var selectedIds = [];
                 document.querySelectorAll(".node-checkbox:checked").forEach(cb => {
                     selectedIds.push(cb.getAttribute("data-id"));
@@ -300,14 +302,14 @@ contentDiv.innerHTML = `
                     alert("Please select at least one item to export.");
                     return;
                 }
-                
+
                 console.log("Exporting IDs to Vertex:", selectedIds);
                 // Your Vertex Export logic goes here
             }
         };
 
         // --- EXPOSED GLOBAL UTILITIES ---
-        executeWidgetCode.toggleNode = function(rowId) {
+        executeWidgetCode.toggleNode = function (rowId) {
             var row = document.getElementById(rowId);
             var toggleBtn = row.querySelector('.tree-toggle');
             var isExpanding = toggleBtn.innerText === "+";
@@ -315,12 +317,12 @@ contentDiv.innerHTML = `
             setChildVisibility(rowId, isExpanding);
         };
 
-        executeWidgetCode.expandAll = function() {
+        executeWidgetCode.expandAll = function () {
             document.querySelectorAll('.tree-row').forEach(r => r.classList.remove('hidden'));
             document.querySelectorAll('.tree-toggle').forEach(t => t.innerText = "-");
         };
 
-        executeWidgetCode.collapseAll = function() {
+        executeWidgetCode.collapseAll = function () {
             document.querySelectorAll('.tree-row[data-parent]').forEach(r => {
                 var parentRow = document.getElementById(r.getAttribute('data-parent'));
                 if (parentRow && parentRow.hasAttribute('data-parent')) {
