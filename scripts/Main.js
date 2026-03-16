@@ -100,7 +100,9 @@ function executeWidgetCode() {
                 contentDiv.style.display = "block";
 
                 var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
+                console.log("Object Info:", objInfo);
                 var name = objInfo.title || objInfo.name || "Selected Object";
+                var revision = objInfo.revision ;
 
                 // Using your CSS Classes instead of inline styles
                 contentDiv.innerHTML = `
