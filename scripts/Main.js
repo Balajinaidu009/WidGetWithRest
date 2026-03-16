@@ -201,15 +201,14 @@ contentDiv.innerHTML = `
                     <table class="bom-table">
                         <thead>
                             <tr>
-                                <th style="width: 40px; text-align:center;"></th> <th style="width: 35%;">Title</th>
                                 <th style="width: 40px; text-align:center;"><input type="checkbox" id="selectAllNodes"></th>
+                                <th style="width: 40px; text-align:center;"></th> <th style="width: 35%;">Title</th>
                                 <th style="width: 20%;">Title (Instance)</th>
-                                <th style="width: 120px;">Type</th>
                                 <th style="width: 60px;">Rev</th>
-                                <th style="width: 100px;">State</th>
+                                <th style="width: 120px;">Type</th>
                                 <th style="width: 150px;">Modification Date</th>
-                                <th style="width: 100px;">Is Latest Revision</th>
                                 <th style="width: 120px;">Owner</th>
+                                <th style="width: 100px;">State</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -258,25 +257,29 @@ contentDiv.innerHTML = `
                         <td style="text-align: center;">
                             <input type="checkbox" class="node-checkbox" data-id="${node.id}">
                         </td>
+                        <td style="text-align: center;">${latestIcon}</td>
                         <td style="padding-left: ${indent + 10}px;">
                             <div class="title-cell">
                                 ${hasChildren ? `<span class="tree-toggle" onclick="executeWidgetCode.toggleNode('${rowId}')">${toggleChar}</span>` : '<span class="tree-leaf-spacer"></span>'}
                                 <img src="${iconUrl}" class="type-icon-3dx">
-                                <span class="node-title">${node.title || node.name}</span>
+                                <span class="node-title highlight-blue">${node.title || node.name}</span>
                             </div>
                         </td>
-                        <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
-                        <td><span class="rev-text">${node.revision || "---"}</span></td>
-                        <td><span class="state-badge work">${node.state || ""}</span></td>
+                        <td><span class="instance-text">${node.instance_name || "---"}</span></td>
+                        <td><span class="rev-text highlight-blue">${node.revision || "---"}</span></td>
+                        <td style="color: #888;">${node.type}</td>
                         <td><span class="mod-date">${node.modified || "---"}</span></td>
-                        <td style="text-align: center;">${latestIcon}</td>
                         <td>
                             <div style="display:flex; align-items:center;">
-                                <span class="owner-initials">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
-                                <span>${node.owner || ""}</span>
+                                <span class="owner-initials-small">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
+                                <span class="highlight-blue">${node.owner || ""}</span>
                             </div>
                         </td>
-
+                        <td>
+                            <span class="state-badge ${node.state ? node.state.toLowerCase().replace(' ', '') : 'work'}">
+                                 ${node.state || ""}
+                            </span>
+                        </td>
                     </tr>`;
 
                 if (node.children) {
