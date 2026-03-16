@@ -238,6 +238,8 @@ function executeWidgetCode() {
                 var hasChildren = node.children && node.children.length > 0;
                 var isHidden = level > 1 ? "hidden" : "";
                 var toggleChar = level >= 1 ? "+" : "-";
+                var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
+                var isPhysicalProduct = node.type === "VPMReference";
                 var rowId = "row_" + node.id + "_" + Math.floor(Math.random() * 1000000);
                 var parentAttr = parentUniqueId ? `data-parent="${parentUniqueId}"` : "";
                 var iconUrl = "";
