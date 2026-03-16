@@ -109,7 +109,7 @@ function executeWidgetCode() {
                     <div class="data-card">
                         <div class="card-header">
                             <div class="title-cell">
-                                <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-3dx">
+                                <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-3dx-bigicon">
                                 <h3 style="margin:0;">${name} ${revision}</h3>
                             </div>
                             <button id="widgetResetBtn" class="btn-reset">✕ Reset</button>
