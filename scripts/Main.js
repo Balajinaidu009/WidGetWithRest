@@ -110,16 +110,17 @@ displayData: function(arrData) {
     var modDate = objInfo.modified || "---"; // Or objInfo.modification_date depending on mask
     var type = objInfo.type || "Physical Product";
 
-    contentDiv.innerHTML = `
-        <div class="data-card">
-            <div class="header-container">
-                <div class="header-main">
-                    <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-header">
-                    <div class="header-info">
-                        <div class="title-row">
-                            <h2 class="header-title">${name} ${revision}</h2>
-                            <button id="widgetResetBtn" class="btn-icon-reset">✕</button>
-                        </div>
+contentDiv.innerHTML = `
+    <div class="data-card">
+        <div class="header-container">
+            <div class="header-main">
+                <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-header">
+                <div class="header-info">
+                    <div class="title-row">
+                        <h2 class="header-title">${name} ${revision}</h2>
+                        <button id="widgetResetBtn" class="btn-icon-reset">✕</button>
+                    </div>
+                    <div class="property-layout">
                         <div class="property-grid">
                             <div class="prop-item">
                                 <span class="prop-label">Enterprise Item Number :</span>
@@ -146,19 +147,23 @@ displayData: function(arrData) {
                                 </div>
                             </div>
                         </div>
+                        <div class="description-column">
+                            <span class="prop-value description-text">${objInfo.description || "No description"}</span>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="toolbar">
-                <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
-                <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
-                <span class="selection-hint">(Select items to export)</span>
-            </div>
-            
-            <div id="apiResult" class="bom-container"></div>
-            <button id="callApiBtn" class="btn-primary">Export Selected to Vertex</button>
-        </div>`;
+        <div class="toolbar">
+            <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
+            <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
+            <span class="selection-hint">(Select items to export)</span>
+        </div>
+        
+        <div id="apiResult" class="bom-container"></div>
+        <button id="callApiBtn" class="btn-primary">Export Selected to Vertex</button>
+    </div>`;
 
     document.getElementById("widgetResetBtn").onclick = function() {
         contentDiv.style.display = "none";

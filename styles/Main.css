@@ -425,3 +425,65 @@
     color: #999;
     font-style: italic;
 }
+/* Vertical Outline for Header Properties */
+.property-layout {
+    display: flex;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 20px;
+    flex: 2;
+}
+
+.description-column {
+    flex: 1;
+    border-left: 1px solid #d1d4d4; /* This is the vertical outline */
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+.description-text {
+    color: #888;
+    font-size: 13px;
+    display: block;
+}
+
+/* Table Outlines (Vertical Borders) */
+.bom-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #d1d4d4; /* Outer outline */
+}
+
+.bom-table th, 
+.bom-table td {
+    padding: 8px 12px;
+    border-right: 1px solid #d1d4d4; /* Vertical grid lines */
+    border-bottom: 1px solid #d1d4d4;
+}
+
+.bom-table th:last-child, 
+.bom-table td:last-child {
+    border-right: none;
+}
+
+/* Tree-specific outlines */
+.tree-row {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Maturity Badge Colors based on states */
+.state-badge.released {
+    background: #007e33; /* Green for Released */
+    color: white;
+}
+
+.state-badge.obsolete {
+    background: transparent;
+    color: #333;
+    border: 1px solid #ccc; /* Hollow for Obsolete */
+}
