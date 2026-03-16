@@ -107,8 +107,8 @@ function executeWidgetCode() {
                     <div class="data-card">
                         <div class="card-header">
                             <div class="title-cell">
-                                <img src="${myWidget.url3DSpace}/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct" class="type-icon-3dx">
-                                <h3 style="margin:0;">${name}</h3>
+                                <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-3dx">
+                                <h3 style="margin:0;">${name} ${revision}</h3>
                             </div>
                             <button id="widgetResetBtn" class="btn-reset">✕ Reset</button>
                         </div>
@@ -198,9 +198,9 @@ function executeWidgetCode() {
 
                 var iconUrl = "";
                 if (isShape) {
-                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part";
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape";
                 } else if (isPhysicalProduct && !hasSubAssembly) {
-                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&icon_95_2ddefaultthb_46_subtype=3DPart";
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart";
                 } else {
                     iconUrl = myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
                 }
@@ -218,7 +218,7 @@ function executeWidgetCode() {
                             </div>
                         </td>
                         <td><span class="rev-text">${node.revision || "---"}</span></td>
-                        <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Assembly" : "3D Part")}</td>
+                        <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
                         <td>
                             <div style="display:flex; align-items:center;">
                                 <span class="owner-initials">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
