@@ -230,7 +230,7 @@ function executeWidgetCode() {
                             </div>
                         </td>
                         <td style="color: #42a5f5; font-weight: bold;">${node.revision || "A"}</td>
-                        <td style="color: #666;">${isShape ? "3D Shape" : (hasSubAssembly ? "Assembly" : "3D Part")}</td>
+                        <td style="color: #666;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
                         <td>${node.owner || ""}</td>
                         <td>
                             <span class="state-badge" style="background:${node.state === 'IN_WORK' ? '#008eb0' : (node.state === 'RELEASED' ? '#00a65a' : '#7a7a7a')};">
