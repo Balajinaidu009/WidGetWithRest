@@ -66,11 +66,7 @@ function executeWidgetCode() {
 
             executeExpand: function(id, context, csrfName, csrfValue) {
                 var resultContainer = document.getElementById("apiResult");
-                resultContainer.innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px;">
-                        <div class="spinner"></div>
-                        <p style="margin-top:15px; color:#666; font-size:13px;">Loading 1st Level Structure...</p>
-                    </div>`;
+                resultContainer.innerHTML = '<div class="loading-state">Expanding full structure...</div>';
 
                 var expandUrl = myWidget.url3DSpace + "/resources/v1/modeler/dseng/dseng:EngItem/" + id + "/expand";
                 var body = {
@@ -106,48 +102,32 @@ function executeWidgetCode() {
                 var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
                 var name = objInfo.title || objInfo.name || "Selected Object";
 
+                // Using your CSS Classes instead of inline styles
                 contentDiv.innerHTML = `
-                    <style>
-                        .data-card { width: 98%; max-width: 1100px; margin: 10px auto; background: white; border: 1px solid #d1d4d4; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: 'Arial', sans-serif; }
-                        .card-header { padding: 12px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-                        .toolbar { padding: 8px 20px; background: #f9f9f9; border-bottom: 1px solid #eee; display: flex; gap: 10px; }
-                        .bom-container { max-height: 500px; min-height: 200px; overflow-y: auto; overflow-x: auto; width: 100%; position: relative; }
-                        .bom-table { width: 100%; border-collapse: collapse; font-size: 13px; color: #333; }
-                        .bom-table th { background: #f1f1f1; padding: 10px; text-align: left; color: #666; font-weight: normal; position: sticky; top: 0; border-bottom: 1px solid #ddd; z-index: 10; }
-                        .tree-row td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
-                        .tree-row.hidden { display: none; }
-                        .tree-toggle { 
-                            cursor: pointer; width: 16px; height: 16px; display: inline-flex; align-items: center; 
-                            justify-content: center; border: 1px solid #ccc; font-size: 12px; margin-right: 6px; 
-                            background: #fff; color: #666; user-select: none; border-radius: 2px; font-family: monospace;
-                        }
-                        .type-icon-3dx { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; }
-                        .state-badge { padding: 2px 8px; color: white; border-radius: 12px; font-size: 10px; font-weight: bold; }
-                        .btn-reset, .btn-tool { border: 1px solid #ccc; background: white; cursor: pointer; padding: 4px 12px; border-radius: 3px; font-size: 11px; transition: 0.2s; }
-                        .btn-tool:hover { background: #42a5f5; color: white; border-color: #42a5f5; }
-                        .btn-primary { width: 100%; background: #42a5f5; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 0 0 4px 4px; }
-                        .spinner { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #42a5f5; border-radius: 50%; animation: spin 1s linear infinite; }
-                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    </style>
                     <div class="data-card">
                         <div class="card-header">
-                            <div style="display:flex; align-items:center;">
-                                <img src="${myWidget.url3DSpace}/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct" style="width:20px; margin-right:8px;">
-                                <h3 style="margin:0; font-size: 16px;">${name}</h3>
+                            <div class="title-cell">
+                                <img src="${myWidget.url3DSpace}/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct" class="type-icon-3dx">
+                                <h3 style="margin:0;">${name}</h3>
                             </div>
                             <button id="widgetResetBtn" class="btn-reset">✕ Reset</button>
                         </div>
-                        <div class="toolbar">
-                            <button class="btn-tool" onclick="executeWidgetCode.expandAll()">Expand All</button>
-                            <button class="btn-tool" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
+                        <div class="toolbar" style="padding: 10px 20px; background: #f9f9f9; border-bottom: 1px solid #eee;">
+                            <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
+                            <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
+                            <span style="font-size: 11px; margin-left: 10px; color: #666;">(Select items to export)</span>
                         </div>
                         <div id="apiResult" class="bom-container"></div>
-                        <button id="callApiBtn" class="btn-primary">Export to Vertex</button>
+                        <button id="callApiBtn" class="btn-primary">Export Selected to Vertex</button>
                     </div>`;
 
                 document.getElementById("widgetResetBtn").onclick = function() {
                     contentDiv.style.display = "none";
                     dropZone.style.display = "flex";
+                };
+
+                document.getElementById("callApiBtn").onclick = function() {
+                    myWidget.handleExport();
                 };
             },
 
@@ -181,6 +161,7 @@ function executeWidgetCode() {
                     <table class="bom-table">
                         <thead>
                             <tr>
+                                <th style="width: 40px; text-align:center;"><input type="checkbox" id="selectAllNodes"></th>
                                 <th style="width: 45%;">Title</th>
                                 <th>Rev</th>
                                 <th>Type</th>
@@ -192,6 +173,12 @@ function executeWidgetCode() {
                             ${myWidget.generateTreeHTML(map[rootId], 0, null)}
                         </tbody>
                     </table>`;
+
+                // Handle select all checkbox
+                document.getElementById("selectAllNodes").onclick = function() {
+                    var checkboxes = document.querySelectorAll(".node-checkbox");
+                    checkboxes.forEach(cb => cb.checked = this.checked);
+                };
             },
 
             generateTreeHTML: function(node, level, parentUniqueId) {
@@ -200,11 +187,9 @@ function executeWidgetCode() {
                 var isShape = node.type === "3DShape";
                 var hasChildren = node.children && node.children.length > 0;
                 
-                // Logic for 3DPart Icon
                 var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
                 var isPhysicalProduct = node.type === "VPMReference";
 
-                // --- 1 LEVEL DEEP LOGIC ---
                 var isHidden = level > 1 ? "hidden" : "";
                 var toggleChar = level >= 1 ? "+" : "-";
 
@@ -213,27 +198,35 @@ function executeWidgetCode() {
 
                 var iconUrl = "";
                 if (isShape) {
-                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape";
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part";
                 } else if (isPhysicalProduct && !hasSubAssembly) {
-                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart";
+                    iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&icon_95_2ddefaultthb_46_subtype=3DPart";
                 } else {
                     iconUrl = myWidget.url3DSpace + "/snresources/images/icons/small/I_VPMNavProduct.png";
                 }
 
                 var html = `
                     <tr class="tree-row ${isHidden}" id="${rowId}" ${parentAttr}>
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="node-checkbox" data-id="${node.id}">
+                        </td>
                         <td style="padding-left: ${indent + 10}px;">
-                            <div style="display: flex; align-items: center;">
-                                ${hasChildren ? `<span class="tree-toggle" onclick="executeWidgetCode.toggleNode('${rowId}')">${toggleChar}</span>` : '<span style="width:24px"></span>'}
+                            <div class="title-cell">
+                                ${hasChildren ? `<span class="tree-toggle" onclick="executeWidgetCode.toggleNode('${rowId}')">${toggleChar}</span>` : '<span class="tree-leaf-spacer"></span>'}
                                 <img src="${iconUrl}" class="type-icon-3dx">
                                 <span class="node-title">${node.title || node.name}</span>
                             </div>
                         </td>
-                        <td style="color: #42a5f5; font-weight: bold;">${node.revision || "A"}</td>
-                        <td style="color: #666;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
-                        <td>${node.owner || ""}</td>
+                        <td><span class="rev-text">${node.revision || "---"}</span></td>
+                        <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Assembly" : "3D Part")}</td>
                         <td>
-                            <span class="state-badge" style="background:${node.state === 'IN_WORK' ? '#008eb0' : (node.state === 'RELEASED' ? '#00a65a' : '#7a7a7a')};">
+                            <div style="display:flex; align-items:center;">
+                                <span class="owner-initials">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
+                                <span>${node.owner || ""}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="state-badge work">
                                 ${node.state || ""}
                             </span>
                         </td>
@@ -245,10 +238,25 @@ function executeWidgetCode() {
                     });
                 }
                 return html;
+            },
+
+            handleExport: function() {
+                var selectedIds = [];
+                document.querySelectorAll(".node-checkbox:checked").forEach(cb => {
+                    selectedIds.push(cb.getAttribute("data-id"));
+                });
+
+                if (selectedIds.length === 0) {
+                    alert("Please select at least one item to export.");
+                    return;
+                }
+                
+                console.log("Exporting IDs to Vertex:", selectedIds);
+                // Your Vertex Export logic goes here
             }
         };
 
-        // --- EXPOSED UTILITIES ---
+        // --- EXPOSED GLOBAL UTILITIES ---
         executeWidgetCode.toggleNode = function(rowId) {
             var row = document.getElementById(rowId);
             var toggleBtn = row.querySelector('.tree-toggle');
