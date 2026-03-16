@@ -265,7 +265,6 @@ contentDiv.innerHTML = `
                                 <span class="node-title">${node.title || node.name}</span>
                             </div>
                         </td>
-                        <td><span class="instance-text">${node.instance_name || "---"}</span></td>
                         <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
                         <td><span class="rev-text">${node.revision || "---"}</span></td>
                         <td><span class="state-badge work">${node.state || ""}</span></td>
