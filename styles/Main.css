@@ -196,8 +196,8 @@
 }
 
 /* Larger icon for the header */
-.type-icon-3dx-bigicon {
-    width: 120px;
+.type-icon-header {
+    width: 110px;
     height: 80px;
     vertical-align: middle;
     margin-right: 8px;
@@ -323,4 +323,105 @@
     cursor: pointer;
     width: 15px;
     height: 15px;
+}
+
+/* Enhanced Header Styling */
+.header-container {
+    padding: 15px 20px;
+    background: #fff;
+    border-bottom: 1px solid #d1d4d4;
+}
+
+.header-main {
+    display: flex;
+    gap: 20px;
+}
+
+.header-info {
+    flex-grow: 1;
+}
+
+.title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.header-title {
+    margin: 0;
+    color: #368ec4;
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+/* Property Grid Layout */
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    gap: 8px 30px;
+}
+
+.prop-item {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+}
+
+.prop-label {
+    color: #777;
+    margin-right: 8px;
+    min-width: 140px;
+}
+
+.prop-value {
+    color: #3d3d3d;
+}
+
+.prop-value.highlight {
+    color: #368ec4;
+    cursor: pointer;
+}
+
+/* Specific UI Elements */
+.owner-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.owner-initials-small {
+    background: #ccc;
+    color: #fff;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.prop-action {
+    color: #368ec4;
+    margin-left: 10px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.btn-icon-reset {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.btn-icon-reset:hover { color: #333; }
+
+.selection-hint {
+    font-size: 11px;
+    margin-left: 10px;
+    color: #999;
+    font-style: italic;
 }

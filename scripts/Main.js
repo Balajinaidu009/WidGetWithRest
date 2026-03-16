@@ -92,46 +92,79 @@ function executeWidgetCode() {
                 });
             },
 
-            displayData: function(arrData) {
-                var contentDiv = document.getElementById("content-display");
-                var dropZone = document.getElementById("drop-zone-ui");
-                
-                dropZone.style.display = "none";
-                contentDiv.style.display = "block";
+displayData: function(arrData) {
+    var contentDiv = document.getElementById("content-display");
+    var dropZone = document.getElementById("drop-zone-ui");
+    
+    dropZone.style.display = "none";
+    contentDiv.style.display = "block";
 
-                var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
-                console.log("Object Info:", objInfo);
-                var name = objInfo.title || objInfo.name || "Selected Object";
-                var revision = objInfo.revision ;
+    var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
+    
+    // Extracting properties from the API response
+    var name = objInfo.title || objInfo.name || "---";
+    var revision = objInfo.revision || "";
+    var ein = objInfo.enterprise_item_number || "None";
+    var state = objInfo.state || "IN_WORK";
+    var owner = objInfo.owner || "Unknown";
+    var modDate = objInfo.modified || "---"; // Or objInfo.modification_date depending on mask
+    var type = objInfo.type || "Physical Product";
 
-                // Using your CSS Classes instead of inline styles
-                contentDiv.innerHTML = `
-                    <div class="data-card">
-                        <div class="card-header">
-                            <div class="title-cell">
-                                <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-3dx-bigicon">
-                                <h3 style="margin:0;">${name} ${revision}</h3>
+    contentDiv.innerHTML = `
+        <div class="data-card">
+            <div class="header-container">
+                <div class="header-main">
+                    <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-header">
+                    <div class="header-info">
+                        <div class="title-row">
+                            <h2 class="header-title">${name} ${revision}</h2>
+                            <button id="widgetResetBtn" class="btn-icon-reset">✕</button>
+                        </div>
+                        <div class="property-grid">
+                            <div class="prop-item">
+                                <span class="prop-label">Enterprise Item Number :</span>
+                                <span class="prop-value highlight">${ein}</span>
                             </div>
-                            <button id="widgetResetBtn" class="btn-reset">✕ Reset</button>
+                            <div class="prop-item">
+                                <span class="prop-label">Modification Date :</span>
+                                <span class="prop-value">${modDate}</span>
+                            </div>
+                            <div class="prop-item">
+                                <span class="prop-label">Maturity State :</span>
+                                <span class="state-badge work">${state}</span>
+                                <span class="prop-action">Freeze ▾</span>
+                            </div>
+                            <div class="prop-item">
+                                <span class="prop-label">Type :</span>
+                                <span class="prop-value">${type}</span>
+                            </div>
+                            <div class="prop-item">
+                                <span class="prop-label">Owner :</span>
+                                <div class="owner-chip">
+                                    <span class="owner-initials-small">${owner.substring(0,1).toUpperCase()}</span>
+                                    <span class="prop-value highlight">${owner}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="toolbar" style="padding: 10px 20px; background: #f9f9f9; border-bottom: 1px solid #eee;">
-                            <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
-                            <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
-                            <span style="font-size: 11px; margin-left: 10px; color: #666;">(Select items to export)</span>
-                        </div>
-                        <div id="apiResult" class="bom-container"></div>
-                        <button id="callApiBtn" class="btn-primary">Export Selected to Vertex</button>
-                    </div>`;
+                    </div>
+                </div>
+            </div>
 
-                document.getElementById("widgetResetBtn").onclick = function() {
-                    contentDiv.style.display = "none";
-                    dropZone.style.display = "flex";
-                };
+            <div class="toolbar">
+                <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
+                <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
+                <span class="selection-hint">(Select items to export)</span>
+            </div>
+            
+            <div id="apiResult" class="bom-container"></div>
+            <button id="callApiBtn" class="btn-primary">Export Selected to Vertex</button>
+        </div>`;
 
-                document.getElementById("callApiBtn").onclick = function() {
-                    myWidget.handleExport();
-                };
-            },
+    document.getElementById("widgetResetBtn").onclick = function() {
+        contentDiv.style.display = "none";
+        dropZone.style.display = "flex";
+    };
+},
 
             renderExpandTable: function(expandData) {
                 var contentDiv = document.getElementById("apiResult");
