@@ -202,12 +202,13 @@ contentDiv.innerHTML = `
                         <thead>
                             <tr>
                                 <th style="width: 40px; text-align:center;"><input type="checkbox" id="selectAllNodes"></th>
-                                <th style="width: 45%;">Title</th>
+                                <th style="width: 40%;">Title</th>
+                                <th>Name</th>
                                 <th>Rev</th>
                                 <th>Type</th>
                                 <th>Owner</th>
                                 <th>State</th>
-                                <th>Title (Instance)</th>
+                                <th>Modification Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -264,6 +265,7 @@ contentDiv.innerHTML = `
                                 <span class="node-title">${node.title || node.name}</span>
                             </div>
                         </td>
+                        <td><span class="name-text">${node.name || ""}</span></td>
                         <td><span class="rev-text">${node.revision || "---"}</span></td>
                         <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
                         <td>
@@ -277,7 +279,7 @@ contentDiv.innerHTML = `
                                 ${node.state || ""}
                             </span>
                         </td>
-                        <td>${node.instance_title || "Nothing"}</td>
+                        <td>${node.modified || ""}</td>
                     </tr>`;
 
                 if (node.children) {
