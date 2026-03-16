@@ -186,13 +186,16 @@ function executeWidgetCode() {
                 var map = {};
                 var rootId = null;
 
+                // 1. Map all objects
                 members.forEach(m => {
                     if (m.type === "VPMReference" || m.type === "3DShape") {
                         map[m.id] = { ...m, children: [] };
+                        // The first VPMReference we find in the flat list is usually the root
                         if (!rootId && m.type === "VPMReference") rootId = m.id;
                     }
                 });
 
+                // 2. Build the hierarchy
                 members.forEach(m => {
                     if (m.Path && m.Path.length >= 3) {
                         for (var i = 0; i < m.Path.length - 2; i += 2) {
@@ -205,6 +208,20 @@ function executeWidgetCode() {
                         }
                     }
                 });
+
+                console.log("Root detected as:", rootId);
+                var rootNode = map[rootId];
+
+                // 3. Render Table - Iterate ONLY through children
+                var tableRowsHtml = "";
+                if (rootNode && rootNode.children && rootNode.children.length > 0) {
+                    rootNode.children.forEach(child => {
+                        // Level starts at 0 for the first level of children
+                        tableRowsHtml += myWidget.generateTreeHTML(child, 0, null);
+                    });
+                } else {
+                    tableRowsHtml = '<tr><td colspan="8" style="text-align:center; padding: 20px;">No children found in this structure.</td></tr>';
+                }
 
                 contentDiv.innerHTML = `
                     <table class="bom-table">
@@ -221,7 +238,7 @@ function executeWidgetCode() {
                             </tr>
                         </thead>
                         <tbody>
-                            ${myWidget.generateTreeHTML(map[rootId], 0, null)}
+                            ${tableRowsHtml}
                         </tbody>
                     </table>`;
 
@@ -285,45 +302,55 @@ function executeWidgetCode() {
             },
 
             handleExport: function () {
-                console.log("--- Export Process Started ---");
+                console.log("--- Export Process Started (Filtered) ---");
                 
-                var selectedIds = [];
-                var checkboxes = document.querySelectorAll(".node-checkbox:checked");
+                var totalIds = [];    // To store checked IDs
+                var optionalIds = []; // To store unchecked IDs
+                
+                // Get all checkboxes in the table
+                var allCheckboxes = document.querySelectorAll(".node-checkbox");
+                var rootId = myWidget.rootPhysicalId;
 
-                checkboxes.forEach(cb => {
-                    selectedIds.push(cb.getAttribute("data-id"));
+                allCheckboxes.forEach(cb => {
+                    var currentId = cb.getAttribute("data-id");
+
+                    // Skip the Root ID from TotalIds regardless of check status
+                    if (currentId === rootId) {
+                        console.log("Skipping Root ID from list: " + currentId);
+                        return; 
+                    }
+
+                    if (cb.checked) {
+                        totalIds.push(currentId);
+                    } else {
+                        optionalIds.push(currentId);
+                    }
                 });
 
-                console.log("Selected IDs for export:", selectedIds);
-
-                if (selectedIds.length === 0) {
-                    console.warn("Export aborted: No items selected.");
-                    alert("Please select at least one item.");
-                    return;
-                }
+                console.log("TotalIds (Selected, excluding Root):", totalIds);
+                console.log("OptionalIds (Unselected):", optionalIds);
 
                 // Prepare the structure
                 var payload = {
                     "Data": {
                         "Root": {
-                            "id": myWidget.rootPhysicalId,
+                            "id": rootId,
                             "type": "VPMReference"
                         },
-                        "TotalIds": selectedIds,
-                        "OptionalIds": []
+                        "TotalIds": totalIds,
+                        "OptionalIds": optionalIds
                     }
                 };
 
-                console.log("Final JSON Payload being sent to Java:", JSON.stringify(payload, null, 2));
+                console.log("Final JSON Payload for Java:", JSON.stringify(payload, null, 2));
 
+                // UI Feedback
                 var exportBtn = document.getElementById("callApiBtn");
                 var originalText = exportBtn.innerText;
-                
                 exportBtn.innerText = "Exporting...";
                 exportBtn.disabled = true;
 
                 var vertexUrl = myWidget.url3DSpace + "/resources/vertex/export";
-                console.log("Target Service URL:", vertexUrl);
 
                 WAFData.authenticatedRequest(vertexUrl, {
                     method: "POST",
@@ -334,27 +361,16 @@ function executeWidgetCode() {
                     data: JSON.stringify(payload),
                     type: "json",
                     onComplete: function (res) {
-                        console.log("--- Export Success ---");
                         console.log("Server Response:", res);
-                        
                         exportBtn.innerText = originalText;
                         exportBtn.disabled = false;
-                        alert("Export Successful");
+                        alert("Export Successful: Sent " + totalIds.length + " items and " + optionalIds.length + " optional items.");
                     },
-                    onFailure: function(err, responseData) {
-                        console.error("--- Export Failed ---");
-                        console.error("Error Object:", err);
-                        console.error("Response Data (if any):", responseData);
-                        
+                    onFailure: function(err) {
+                        console.error("Export Failed:", err);
                         exportBtn.innerText = originalText;
                         exportBtn.disabled = false;
-                        
-                        // Check for common 404/500 errors
-                        if(err.indexOf("404") !== -1) {
-                            alert("Error 404: The Java REST service was not found at the expected URL.");
-                        } else {
-                            alert("Export Failed. Check browser console for details.");
-                        }
+                        alert("Export Failed. See console.");
                     }
                 });
             }
