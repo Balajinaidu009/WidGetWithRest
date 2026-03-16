@@ -10,6 +10,7 @@ function executeWidgetCode() {
 
         var myWidget = {
             url3DSpace: "",
+            rootPhysicalId: "", // Added to track the dropped object
 
             onLoadWidget: function () {
                 myWidget.callData();
@@ -34,6 +35,10 @@ function executeWidgetCode() {
                         var dataDnD = JSON.parse(data);
                         var physicalid = dataDnD.data.items[0].objectId;
                         var dropContext = dataDnD.data.items[0].contextId;
+                        
+                        // Set the root ID for the export payload later
+                        myWidget.rootPhysicalId = physicalid; 
+                        
                         myWidget.fetchObjectInfo(physicalid, dropContext);
                     }
                 });
@@ -101,75 +106,77 @@ function executeWidgetCode() {
 
                 var objInfo = (arrData.member && arrData.member[0]) ? arrData.member[0] : (arrData[0] ? arrData[0] : arrData);
 
-                // Extracting properties from the API response
                 var name = objInfo.title || objInfo.name || "---";
                 var revision = objInfo.revision || "";
                 var ein = objInfo.enterprise_item_number || "None";
                 var state = objInfo.state || "IN_WORK";
                 var owner = objInfo.owner || "Unknown";
-                var modDate = objInfo.modified || "---"; // Or objInfo.modification_date depending on mask
+                var modDate = objInfo.modified || "---";
                 var type = objInfo.type || "Physical Product";
 
                 contentDiv.innerHTML = `
-    <div class="data-card">
-        <div class="header-container">
-            <div class="header-main">
-                <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-header">
-                <div class="header-info">
-                    <div class="title-row">
-                        <h2 class="header-title">${name} ${revision}</h2>
-                        <button id="widgetResetBtn" class="btn-icon-reset">✕</button>
-                    </div>
-                    <div class="property-layout">
-                        <div class="property-grid">
-                            <div class="prop-item">
-                                <span class="prop-label">Enterprise Item Number :</span>
-                                <span class="prop-value highlight">${ein}</span>
-                            </div>
-                            <div class="prop-item">
-                                <span class="prop-label">Modification Date :</span>
-                                <span class="prop-value">${modDate}</span>
-                            </div>
-                            <div class="prop-item">
-                                <span class="prop-label">Maturity State :</span>
-                                <span class="state-badge work">${state}</span>
-                            </div>
-                            <div class="prop-item">
-                                <span class="prop-label">Type :</span>
-                                <span class="prop-value">${type}</span>
-                            </div>
-                            <div class="prop-item">
-                                <span class="prop-label">Owner :</span>
-                                <div class="owner-chip">
-                                    <span class="owner-initials-small">${owner.substring(0, 1).toUpperCase()}</span>
-                                    <span class="prop-value highlight">${owner}</span>
+                    <div class="data-card">
+                        <div class="header-container">
+                            <div class="header-main">
+                                <img src="${myWidget.url3DSpace}/snresources/images/icons/large/I_VPMNavProduct108x144.png" class="type-icon-header">
+                                <div class="header-info">
+                                    <div class="title-row">
+                                        <h2 class="header-title">${name} ${revision}</h2>
+                                        <button id="widgetResetBtn" class="btn-icon-reset">✕</button>
+                                    </div>
+                                    <div class="property-layout">
+                                        <div class="property-grid">
+                                            <div class="prop-item">
+                                                <span class="prop-label">Enterprise Item Number :</span>
+                                                <span class="prop-value highlight">${ein}</span>
+                                            </div>
+                                            <div class="prop-item">
+                                                <span class="prop-label">Modification Date :</span>
+                                                <span class="prop-value">${modDate}</span>
+                                            </div>
+                                            <div class="prop-item">
+                                                <span class="prop-label">Maturity State :</span>
+                                                <span class="state-badge work">${state}</span>
+                                            </div>
+                                            <div class="prop-item">
+                                                <span class="prop-label">Type :</span>
+                                                <span class="prop-value">${type}</span>
+                                            </div>
+                                            <div class="prop-item">
+                                                <span class="prop-label">Owner :</span>
+                                                <div class="owner-chip">
+                                                    <span class="owner-initials-small">${owner.substring(0, 1).toUpperCase()}</span>
+                                                    <span class="prop-value highlight">${owner}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="description-column">
+                                            <span class="prop-value description-text">${objInfo.description || "No description"}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="description-column">
-                            <span class="prop-value description-text">${objInfo.description || "No description"}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-                <div class="toolbar">
-                    <div class="toolbar-left-group">
-                        <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
-                        <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
-                        <span class="selection-hint">(Select items to export)</span>
-                    </div>
-                            
-                    <button id="callApiBtn" class="btn-primary">Export to Vertex</button>
-                </div>
-        
-        <div id="apiResult" class="bom-container"></div>
-    </div>`;
+                        <div class="toolbar">
+                            <div class="toolbar-left-group">
+                                <button class="btn-reset" onclick="executeWidgetCode.expandAll()">Expand All</button>
+                                <button class="btn-reset" onclick="executeWidgetCode.collapseAll()">Collapse All</button>
+                                <span class="selection-hint">(Select items to export)</span>
+                            </div>
+                            <button id="callApiBtn" class="btn-primary">Export to Vertex</button>
+                        </div>
+                        
+                        <div id="apiResult" class="bom-container"></div>
+                    </div>`;
 
                 document.getElementById("widgetResetBtn").onclick = function () {
                     contentDiv.style.display = "none";
                     dropZone.style.display = "flex";
+                };
+
+                document.getElementById("callApiBtn").onclick = function() {
+                    myWidget.handleExport();
                 };
             },
 
@@ -206,7 +213,7 @@ function executeWidgetCode() {
                                 <th style="width: 40px; text-align:center;"><input type="checkbox" id="selectAllNodes"></th>
                                 <th style="width: 40%;">Title</th>
                                 <th>Name</th>
-                                <th>Rev</th>
+                                <th style="width: 50px; text-align:center;">Rev</th>
                                 <th>Type</th>
                                 <th>Owner</th>
                                 <th>State</th>
@@ -218,7 +225,6 @@ function executeWidgetCode() {
                         </tbody>
                     </table>`;
 
-                // Handle select all checkbox
                 document.getElementById("selectAllNodes").onclick = function () {
                     var checkboxes = document.querySelectorAll(".node-checkbox");
                     checkboxes.forEach(cb => cb.checked = this.checked);
@@ -227,25 +233,13 @@ function executeWidgetCode() {
 
             generateTreeHTML: function (node, level, parentUniqueId) {
                 if (!node) return "";
-                console.log("Current Node:", node);
                 var indent = level * 20;
                 var isShape = node.type === "3DShape";
                 var hasChildren = node.children && node.children.length > 0;
-
-                var hasSubAssembly = node.children && node.children.some(c => c.type === "VPMReference");
-                var isPhysicalProduct = node.type === "VPMReference";
-
                 var isHidden = level > 1 ? "hidden" : "";
                 var toggleChar = level >= 1 ? "+" : "-";
-
                 var rowId = "row_" + node.id + "_" + Math.floor(Math.random() * 1000000);
                 var parentAttr = parentUniqueId ? `data-parent="${parentUniqueId}"` : "";
-                // Logic for Is Latest Revision
-                var isLatest = node.is_latest_revision === "TRUE" || node.is_latest_revision === true;
-                var latestIcon = isLatest
-                    ? `<span class="status-icon icon-latest-true">✔</span>`
-                    : `<span class="status-icon icon-latest-false">✖</span>`;
-
                 var iconUrl = "";
                 if (isShape) {
                     iconUrl = myWidget.url3DSpace + "/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape";
@@ -269,18 +263,14 @@ function executeWidgetCode() {
                         </td>
                         <td><span class="name-text">${node.name || ""}</span></td>
                         <td><span class="rev-text">${node.revision || "---"}</span></td>
-                        <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
+                        <td style="color: #888;">${isShape ? "3D Shape" : "Physical Product"}</td>
                         <td>
                             <div style="display:flex; align-items:center;">
                                 <span class="owner-initials">${node.owner ? node.owner.substring(0, 2).toUpperCase() : "??"}</span>
                                 <span>${node.owner || ""}</span>
                             </div>
                         </td>
-                        <td>
-                            <span class="state-badge work">
-                                ${node.state || ""}
-                            </span>
-                        </td>
+                        <td><span class="state-badge work">${node.state || ""}</span></td>
                         <td>${node.modified || ""}</td>
                     </tr>`;
 
@@ -293,22 +283,82 @@ function executeWidgetCode() {
             },
 
             handleExport: function () {
+                console.log("--- Export Process Started ---");
+                
                 var selectedIds = [];
-                document.querySelectorAll(".node-checkbox:checked").forEach(cb => {
+                var checkboxes = document.querySelectorAll(".node-checkbox:checked");
+
+                checkboxes.forEach(cb => {
                     selectedIds.push(cb.getAttribute("data-id"));
                 });
 
+                console.log("Selected IDs for export:", selectedIds);
+
                 if (selectedIds.length === 0) {
-                    alert("Please select at least one item to export.");
+                    console.warn("Export aborted: No items selected.");
+                    alert("Please select at least one item.");
                     return;
                 }
 
-                console.log("Exporting IDs to Vertex:", selectedIds);
-                // Your Vertex Export logic goes here
+                // Prepare the structure
+                var payload = {
+                    "Data": {
+                        "Root": {
+                            "id": myWidget.rootPhysicalId,
+                            "type": "VPMReference"
+                        },
+                        "TotalIds": selectedIds,
+                        "OptionalIds": []
+                    }
+                };
+
+                console.log("Final JSON Payload being sent to Java:", JSON.stringify(payload, null, 2));
+
+                var exportBtn = document.getElementById("callApiBtn");
+                var originalText = exportBtn.innerText;
+                
+                exportBtn.innerText = "Exporting...";
+                exportBtn.disabled = true;
+
+                var vertexUrl = myWidget.url3DSpace + "/resources/vertex/export";
+                console.log("Target Service URL:", vertexUrl);
+
+                WAFData.authenticatedRequest(vertexUrl, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    data: JSON.stringify(payload),
+                    type: "json",
+                    onComplete: function (res) {
+                        console.log("--- Export Success ---");
+                        console.log("Server Response:", res);
+                        
+                        exportBtn.innerText = originalText;
+                        exportBtn.disabled = false;
+                        alert("Export Successful");
+                    },
+                    onFailure: function(err, responseData) {
+                        console.error("--- Export Failed ---");
+                        console.error("Error Object:", err);
+                        console.error("Response Data (if any):", responseData);
+                        
+                        exportBtn.innerText = originalText;
+                        exportBtn.disabled = false;
+                        
+                        // Check for common 404/500 errors
+                        if(err.indexOf("404") !== -1) {
+                            alert("Error 404: The Java REST service was not found at the expected URL.");
+                        } else {
+                            alert("Export Failed. Check browser console for details.");
+                        }
+                    }
+                });
             }
         };
 
-        // --- EXPOSED GLOBAL UTILITIES ---
+        // --- GLOBAL UTILITIES ---
         executeWidgetCode.toggleNode = function (rowId) {
             var row = document.getElementById(rowId);
             var toggleBtn = row.querySelector('.tree-toggle');
@@ -327,8 +377,6 @@ function executeWidgetCode() {
                 var parentRow = document.getElementById(r.getAttribute('data-parent'));
                 if (parentRow && parentRow.hasAttribute('data-parent')) {
                     r.classList.add('hidden');
-                } else {
-                    r.classList.remove('hidden');
                 }
             });
             document.querySelectorAll('.tree-toggle').forEach(t => t.innerText = "+");
