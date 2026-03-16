@@ -207,6 +207,7 @@ contentDiv.innerHTML = `
                                 <th style="width: 60px;">Rev</th>
                                 <th style="width: 120px;">Type</th>
                                 <th style="width: 150px;">Modification Date</th>
+                                <th style="width: 80px; text-align:center;">Is Latest Revision</th>
                                 <th style="width: 120px;">Owner</th>
                                 <th style="width: 100px;">State</th>
                             </tr>
@@ -234,6 +235,7 @@ contentDiv.innerHTML = `
 
                 var isHidden = level > 1 ? "hidden" : "";
                 var toggleChar = level >= 1 ? "+" : "-";
+                console.log("Node------>"+node);
 
                 var rowId = "row_" + node.id + "_" + Math.floor(Math.random() * 1000000);
                 var parentAttr = parentUniqueId ? `data-parent="${parentUniqueId}"` : "";
@@ -257,7 +259,6 @@ contentDiv.innerHTML = `
                         <td style="text-align: center;">
                             <input type="checkbox" class="node-checkbox" data-id="${node.id}">
                         </td>
-                        <td style="text-align: center;">${latestIcon}</td>
                         <td style="padding-left: ${indent + 10}px;">
                             <div class="title-cell">
                                 ${hasChildren ? `<span class="tree-toggle" onclick="executeWidgetCode.toggleNode('${rowId}')">${toggleChar}</span>` : '<span class="tree-leaf-spacer"></span>'}
@@ -269,6 +270,8 @@ contentDiv.innerHTML = `
                         <td><span class="rev-text highlight-blue">${node.revision || "---"}</span></td>
                         <td style="color: #888;">${node.type}</td>
                         <td><span class="mod-date">${node.modified || "---"}</span></td>
+                        <td style="text-align: center;">${latestIcon}</td>
+
                         <td>
                             <div style="display:flex; align-items:center;">
                                 <span class="owner-initials-small">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
