@@ -201,12 +201,15 @@ contentDiv.innerHTML = `
                     <table class="bom-table">
                         <thead>
                             <tr>
+                                <th style="width: 40px; text-align:center;"></th> <th style="width: 35%;">Title</th>
                                 <th style="width: 40px; text-align:center;"><input type="checkbox" id="selectAllNodes"></th>
-                                <th style="width: 45%;">Title</th>
-                                <th>Rev</th>
-                                <th>Type</th>
-                                <th>Owner</th>
-                                <th>State</th>
+                                <th style="width: 20%;">Title (Instance)</th>
+                                <th style="width: 120px;">Type</th>
+                                <th style="width: 60px;">Rev</th>
+                                <th style="width: 100px;">State</th>
+                                <th style="width: 150px;">Modification Date</th>
+                                <th style="width: 100px;">Is Latest Revision</th>
+                                <th style="width: 120px;">Owner</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -263,21 +266,18 @@ contentDiv.innerHTML = `
                             </div>
                         </td>
                         <td><span class="instance-text">${node.instance_name || "---"}</span></td>
-                        <td><span class="rev-text">${node.revision || "---"}</span></td>
                         <td style="color: #888;">${isShape ? "3D Shape" : (hasSubAssembly ? "Physical Product" : "Physical Product")}</td>
-                        <td style="text-align: center;">${latestIcon}</td>
+                        <td><span class="rev-text">${node.revision || "---"}</span></td>
+                        <td><span class="state-badge work">${node.state || ""}</span></td>
                         <td><span class="mod-date">${node.modified || "---"}</span></td>
+                        <td style="text-align: center;">${latestIcon}</td>
                         <td>
                             <div style="display:flex; align-items:center;">
                                 <span class="owner-initials">${node.owner ? node.owner.substring(0,2).toUpperCase() : "??"}</span>
                                 <span>${node.owner || ""}</span>
                             </div>
                         </td>
-                        <td>
-                            <span class="state-badge work">
-                                ${node.state || ""}
-                            </span>
-                        </td>
+
                     </tr>`;
 
                 if (node.children) {
