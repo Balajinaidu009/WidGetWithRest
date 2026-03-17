@@ -350,7 +350,7 @@ function executeWidgetCode() {
                 exportBtn.innerText = "Exporting...";
                 exportBtn.disabled = true;
 
-                var vertexUrl = myWidget.url3DSpace + "/resources/vertex/export";
+                var vertexUrl = "https://restappdata.onrender.com/vertex/export";
 
                 WAFData.authenticatedRequest(vertexUrl, {
                     method: "POST",
