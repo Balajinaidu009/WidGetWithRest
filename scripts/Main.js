@@ -332,13 +332,13 @@ function executeWidgetCode() {
 
                 // Prepare the structure
                 var payload = {
-                    "Data": {
-                        "Root": {
+                    "data": {
+                        "root": {
                             "id": rootId,
                             "type": "VPMReference"
                         },
-                        "TotalIds": totalIds,
-                        "OptionalIds": optionalIds
+                        "totalIds": totalIds,
+                        "optionalIds": optionalIds
                     }
                 };
 
