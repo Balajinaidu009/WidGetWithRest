@@ -358,8 +358,8 @@ function executeWidgetCode() {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    body: JSON.stringify(payload),
-                    //type: "json",
+                    data: JSON.stringify(payload),
+                    type: "json",
                     onComplete: function (res) {
                         console.log("Server Response:", res);
                         exportBtn.innerText = originalText;
